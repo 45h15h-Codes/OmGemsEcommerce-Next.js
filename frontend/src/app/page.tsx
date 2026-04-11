@@ -84,6 +84,7 @@ export default function Home() {
               muted 
               loop 
               playsInline 
+              suppressHydrationWarning
               className="w-full h-full object-cover scale-105 brightness-[0.98] contrast-[1.02]"
            >
               <source 
