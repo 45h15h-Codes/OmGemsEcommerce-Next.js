@@ -12,7 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Register custom middleware aliases for role-based access control.
+        // Architecture: Two-layer authorization —
+        //   check.role       → "Can this user enter this portal?"
+        //   check.permission → "Can this user perform this action?"
+        $middleware->alias([
+            'check.permission' => \App\Http\Middleware\CheckPermission::class,
+            'check.role'       => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        // Sanctum stateful domains for SPA cookie-based auth
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

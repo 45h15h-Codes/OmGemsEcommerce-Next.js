@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('cut', 10)->nullable();
             $table->string('shape', 50);
             $table->decimal('price', 12, 2); // Base price
-            $table->jsonb('specs')->default('{}'); // PostgreSQL JSONB for advanced specs (polish, symmetry, fluorescence, etc.)
+            $table->json('specs')->nullable(); // Advanced specs (polish, symmetry, fluorescence, etc.)
             $table->string('video_url')->nullable();
             $table->string('image_url')->nullable();
             $table->boolean('is_available')->default(true);

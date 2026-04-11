@@ -19,8 +19,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('base_price', 12, 2);
-            $table->jsonb('attributes')->default('{}'); // PostgreSQL JSONB for flexible attributes
-            $table->jsonb('media')->default('[]'); // Array of image/video URLs
+            $table->json('attributes')->nullable(); // Flexible product attributes
+            $table->json('media')->nullable(); // Array of image/video URLs
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

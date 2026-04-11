@@ -31,7 +31,17 @@ class MockDataSeeder extends Seeder
         ]);
         $admin->assignRole('Super Admin');
 
-        // Create Vendor
+        // Create Regular Admin
+        $regularAdmin = User::firstOrCreate([
+            'email' => 'manager@omgems.com',
+        ], [
+            'name' => 'General Admin',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+        $regularAdmin->assignRole('Admin');
+
+        // Create Partner / Vendor
         $vendor = User::firstOrCreate([
             'email' => 'vendor@partner.com',
         ], [
@@ -40,6 +50,26 @@ class MockDataSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
         $vendor->assignRole('Partner');
+
+        // Create Wholesale Buyer
+        $wholesale = User::firstOrCreate([
+            'email' => 'buyer@wholesale.com',
+        ], [
+            'name' => 'Wholesale Buyer',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+        $wholesale->assignRole('Wholesale Buyer');
+
+        // Create Retail Customer
+        $retail = User::firstOrCreate([
+            'email' => 'customer@retail.com',
+        ], [
+            'name' => 'Retail Customer',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+        $retail->assignRole('Retail Customer');
 
         // Create a basic category
         $category = Category::firstOrCreate([
