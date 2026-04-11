@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  /* TIER-1 LUXURY PALETTE (Quiet Luxury / Digital Silk) */
+  --background: #FDFDFD;     /* Cloud Silk (Ultra-premium off-white) */
+  --foreground: #1C1C1C;     /* Anthracite (Deep gunmetal text) */
+  
+  --muted: #F5F5F5;
+  --muted-foreground: #71717A;
+  
+  --accent: #E5E4E2;         /* Platinum Metallic */
+  --accent-foreground: #1C1C1C;
+  
+  --primary: #C0C0C0;        /* Silver/Platinum Shine */
+  --primary-foreground: #FFFFFF;
+  
+  --border: #EAEAEA;         /* Delicate hair-line borders */
+  
+  /* Maison specific: Champagne Gold (Used sparingly for high jewelry accents) */
+  --luxury-gold: #D4AF37;
+  
+  --container-max: 1440px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  --color-border: var(--border);
+  --color-gold: var(--luxury-gold);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+  
+  /* Severe Tier-1 Geometry: Zero rounding */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-full: 0px;
+
+  /* Spacing: Generous airy padding */
+  --spacing-maison: 4rem;
+}
+
+/* Base styles and defaults */
+html {
+  scroll-behavior: smooth;
+  cursor: none; 
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+/* Luxury selection - subtle platinum highlight */
+::selection {
+  background-color: var(--accent);
+  color: var(--foreground);
+}
+
+/* Typography Scale */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+/* Custom Scrollbar - Ivory Minimalist */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
