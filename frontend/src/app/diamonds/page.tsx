@@ -147,7 +147,17 @@ export default function DiamondsPage() {
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Wholesale Pricing</span>
                       <p className="text-[10px] font-bold font-mono tracking-tighter text-foreground mt-1 group-hover:text-primary transition-colors">Access Limited to Partners</p>
                    </div>
-                   <Link href={`/diamonds/${item}`} className="text-[10px] font-bold uppercase tracking-widest border-b border-foreground pb-1 hover:border-primary transition-all">Details</Link>
+                   {/* FIX: prefetch={false} prevents Next.js from aggressively prefetching
+                       all 9 detail routes simultaneously when the grid mounts/scrolls into view.
+                       Without this, Next.js fires 9 concurrent RSC requests causing repeated
+                       HMR websocket reconnects and apparent "reload" behavior in dev. */}
+                   <Link
+                     href={`/diamonds/${item}`}
+                     prefetch={false}
+                     className="text-[10px] font-bold uppercase tracking-widest border-b border-foreground pb-1 hover:border-primary transition-all"
+                   >
+                     Details
+                   </Link>
                 </div>
               </motion.div>
             ))}
