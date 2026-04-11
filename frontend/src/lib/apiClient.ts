@@ -2,7 +2,6 @@ import axios from 'axios';
 
 /**
  * Configure global axios instance to interface with Laravel backend.
- * Includes credentials option crucial for Sanctum CSRF mechanism.
  */
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -17,21 +16,36 @@ export const apiClient = axios.create({
 
 /**
  * Perform a Sanctum CSRF-cookie initialization request.
- * Must be called once before making state-mutating requests (POST, PUT, DELETE)
- * if the user is not yet authenticated or the session expired.
  */
 export const initCsrf = async () => {
   await apiClient.get('/sanctum/csrf-cookie');
 };
 
-// Optional: Add request/response interceptors to handle 401 Unauthorized globally
+// Request interceptor to inject Bearer token
+apiClient.interceptors.request.use((config) => {
+  if (typeof document !== 'undefined') {
+    // Read token from cookie
+    const match = document.cookie.match(new RegExp('(^| )auth_token=([^;]+)'));
+    if (match && match[2]) {
+      config.headers.Authorization = `Bearer ${decodeURIComponent(match[2])}`;
+    }
+  }
+  return config;
+});
+
+// Response interceptor to handle 401 Unauthorized globally
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.log('Unauthenticated. Redirecting to login...');
-      // Implement sign out or redirect to login page logic here
-      // e.g. window.location.href = '/login';
+      console.warn('Unauthenticated. Redirecting to login...');
+      if (typeof document !== 'undefined') {
+        const pastDate = 'Thu, 01 Jan 1970 00:00:01 GMT';
+        document.cookie = `auth_token=; path=/; expires=${pastDate};`;
+        document.cookie = `user_role=; path=/; expires=${pastDate};`;
+        localStorage.removeItem('auth-storage');
+        window.location.href = '/auth/login';
+      }
     }
     return Promise.reject(error);
   }

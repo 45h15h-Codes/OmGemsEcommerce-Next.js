@@ -3,13 +3,25 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 
 export const Navbar = () => {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const { isCartOpen, toggleCart } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Hide Navbar completely on portal routes — they have their own shell
+  const isPortalRoute =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/partner/dashboard") ||
+    pathname.startsWith("/partner/diamonds") ||
+    pathname.startsWith("/partner/orders") ||
+    pathname.startsWith("/partner/profile") ||
+    pathname.startsWith("/wholesale") ||
+    pathname.startsWith("/account");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,6 +51,8 @@ export const Navbar = () => {
     { label: "Craftsmanship", href: "/maison" },
     { label: "Bespoke Services", href: "/high-jewelry" },
   ];
+
+  if (isPortalRoute) return null;
 
   return (
     <>

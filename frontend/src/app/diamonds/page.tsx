@@ -10,7 +10,7 @@ export default function DiamondsPage() {
   const shapes = ["Round", "Princess", "Cushion", "Emerald", "Oval", "Pear", "Radiant", "Heart", "Marquise"];
   const filters = ["Price", "Carat", "Color", "Clarity", "Cut", "Polish", "Symmetry", "Fluorescence"];
 
-  const diamondImg = "https://images.unsplash.com/photo-1626248801379-317424fb8798?auto=format&fit=crop&q=80&w=2070";
+  const diamondImg = "/diamond.png";
 
   return (
     <main className="min-h-screen pt-36 bg-background pb-32">
