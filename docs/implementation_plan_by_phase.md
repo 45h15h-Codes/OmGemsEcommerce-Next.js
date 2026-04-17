@@ -11,7 +11,7 @@ flowchart TD
     %% Roles Definition
     User([Any Authenticated User])
     Auth{Auth / Login Gateway\nPOST /api/login}
-    
+
     %% Dashboards
     SuperAdmin[Super Admin Panel\n/admin]
     Admin[Admin Panel\n/admin]
@@ -51,12 +51,12 @@ flowchart TD
     Retail --> R1[Basic Order Tracking]
     Retail --> R2[Wishlists / Saved Items]
     Retail --> R3[Profile & Address Book]
-    
+
     %% Style adjustments
     classDef admin fill:#f9d0c4,stroke:#333,stroke-width:2px;
     classDef vendor fill:#f9f0c4,stroke:#333,stroke-width:2px;
     classDef buyer fill:#c4e3f9,stroke:#333,stroke-width:2px;
-    
+
     class SuperAdmin,Admin admin;
     class Vendor vendor;
     class Wholesale,Retail buyer;
@@ -103,6 +103,7 @@ flowchart LR
 **Estimated effort:** ~1 session
 
 ### What Already Exists
+
 - ✅ 5 roles seeded via `RoleSeeder.php`: Super Admin, Admin, Partner, Wholesale Buyer, Retail Customer
 - ✅ Mock users for each role in `MockDataSeeder.php`
 - ✅ Basic `AuthController` with login/register/logout/me
@@ -111,6 +112,7 @@ flowchart LR
 ### What Needs to Be Done
 
 #### [MODIFY] [RoleSeeder.php](file:///d:/Ashish%20Projects/In%20Use/e-commerce-next.js/backend/database/seeders/RoleSeeder.php)
+
 - Define **granular permissions** and map them to roles:
   ```
   Super Admin  → * (all permissions, using Gate::before)
@@ -121,6 +123,7 @@ flowchart LR
   ```
 
 #### [MODIFY] [AuthController.php](file:///d:/Ashish%20Projects/In%20Use/e-commerce-next.js/backend/app/Http/Controllers/Auth/AuthController.php)
+
 - Update the `me()` endpoint to return `roles` AND `permissions` arrays
 - Update `login()` response to include `redirect_path` based on role:
   - Super Admin / Admin → `/admin`
@@ -129,10 +132,12 @@ flowchart LR
   - Retail Customer → `/account`
 
 #### [NEW] `backend/app/Http/Middleware/CheckPermission.php`
+
 - Custom middleware that checks `$user->hasPermissionTo($permission)` or `$user->hasRole('Super Admin')`
 - Returns `403 Forbidden` JSON on failure
 
 #### [MODIFY] [api.php](file:///d:/Ashish%20Projects/In%20Use/e-commerce-next.js/backend/routes/api.php)
+
 - Add permission middleware to protected routes:
   ```php
   Route::middleware(['auth:sanctum', 'permission:manage_diamonds'])->group(...)
@@ -140,9 +145,11 @@ flowchart LR
 - Group admin-only, partner-only, and buyer-only endpoints
 
 #### [MODIFY] `backend/app/Providers/AuthServiceProvider.php`
+
 - Add `Gate::before()` to grant Super Admin bypass on all permission checks
 
 ### Verification
+
 - `php artisan db:seed --class=RoleSeeder` runs without errors
 - `POST /api/login` returns role + permissions + redirect_path
 - `GET /api/me` returns role + permissions
@@ -161,17 +168,20 @@ flowchart LR
 ### What Needs to Be Done
 
 #### [NEW] `frontend/src/lib/auth.ts`
+
 - Auth context/provider that stores user, token, roles, and permissions
 - `login()`, `logout()`, `getMe()` functions using the existing `apiClient.ts`
 - `hasPermission(perm)` and `hasRole(role)` utility helpers
 
 #### [NEW] `frontend/src/app/auth/login/page.tsx`
+
 - Premium, themed login form (email + password)
 - Hits `POST /api/login`
 - On success, stores token, reads `redirect_path` from response, navigates accordingly
 - Error handling with validation messages
 
 #### [NEW] `frontend/src/middleware.ts`
+
 - Next.js edge middleware for route protection:
   ```
   /admin/*        → requires role Super Admin OR Admin
@@ -182,10 +192,12 @@ flowchart LR
 - Redirects unauthorized users to `/auth/login`
 
 #### [MODIFY] [apiClient.ts](file:///d:/Ashish%20Projects/In%20Use/e-commerce-next.js/frontend/src/lib/apiClient.ts)
+
 - Add automatic `Authorization: Bearer <token>` header injection
 - Add `401` interceptor that clears auth state and redirects to login
 
 ### Verification
+
 - Login as each of the 5 mock users → each redirects to correct dashboard path
 - Manually navigating to `/admin` as a Retail Customer → redirected to `/auth/login`
 - Manually navigating to `/partner/dashboard` as an Admin → redirected to `/auth/login`
@@ -202,6 +214,7 @@ flowchart LR
 **Depends on:** Phase 2
 
 ### Panel Design
+
 - **Shared layout** at `/admin` for both Super Admin and Admin
 - Sidebar items dynamically rendered based on user's permissions
 - Admin sees only modules they've been granted; Super Admin sees everything
@@ -209,6 +222,7 @@ flowchart LR
 ### What Needs to Be Done
 
 #### [NEW] `frontend/src/app/(admin)/layout.tsx`
+
 - Admin shell layout with:
   - Collapsible sidebar (permission-filtered navigation)
   - Top bar with user info, role badge, logout
@@ -216,12 +230,14 @@ flowchart LR
   - Premium dark/light theme toggle
 
 #### [NEW] `frontend/src/app/(admin)/admin/page.tsx`
+
 - Admin dashboard home page with:
   - Stats cards (total diamonds, orders, users, revenue)
   - Recent activity feed
   - Quick action buttons
 
 #### [NEW] `frontend/src/components/admin/Sidebar.tsx`
+
 - Dynamic sidebar component that receives user permissions
 - Navigation items:
   | Module | Permission Required | Super Admin | Admin |
@@ -234,10 +250,12 @@ flowchart LR
   | Site Settings | `manage_settings` | ✅ | ❌ (Super Admin only) |
 
 #### [NEW] `frontend/src/app/(admin)/admin/diamonds/page.tsx`
+
 - Full diamond listing table with CRUD operations
 - Search, filter, sort, pagination
 
 #### [NEW] `frontend/src/app/(admin)/admin/users/page.tsx`
+
 - User management page (Super Admin only)
 - List all users, assign/revoke roles and permissions
 - Create new staff/admin accounts
@@ -245,15 +263,18 @@ flowchart LR
 #### Backend Support
 
 #### [NEW] `backend/app/Http/Controllers/Admin/DashboardController.php`
+
 - `GET /api/admin/stats` — aggregated dashboard data
 - Requires `auth:sanctum` + admin role
 
 #### [NEW] `backend/app/Http/Controllers/Admin/UserController.php`
+
 - CRUD for user management (Super Admin only)
 - `POST /api/admin/users/{id}/roles` — assign roles
 - `POST /api/admin/users/{id}/permissions` — assign permissions
 
 ### Verification
+
 - Super Admin sees full sidebar, Admin sees restricted sidebar
 - Navigating to `/admin/users` as a regular Admin → 403 or redirect
 - Dashboard stats API returns correct data
@@ -272,11 +293,13 @@ flowchart LR
 ### What Needs to Be Done
 
 #### [NEW] `frontend/src/app/partner/layout.tsx`
+
 - Dedicated partner portal layout (visually distinct from admin)
 - Sidebar: Dashboard, My Diamonds, My Orders, Profile
 - Top bar with vendor name, notification bell
 
 #### [NEW] `frontend/src/app/partner/dashboard/page.tsx`
+
 - Partner dashboard:
   - Active listings count
   - Pending orders count
@@ -284,12 +307,14 @@ flowchart LR
   - Recent activity
 
 #### [NEW] `frontend/src/app/partner/diamonds/page.tsx`
+
 - Diamond management scoped to the vendor's own stones only
 - Upload new diamond (form or CSV)
 - Toggle `is_available` status
 - Edit diamond details
 
 #### [NEW] `frontend/src/app/partner/orders/page.tsx`
+
 - Orders that contain this vendor's stones
 - Order status, tracking info
 - Cannot see other vendors' data or total platform revenue
@@ -297,19 +322,23 @@ flowchart LR
 #### Backend Support
 
 #### [NEW] `backend/app/Http/Controllers/Partner/PartnerDiamondController.php`
+
 - CRUD scoped to `where('vendor_id', auth()->id())`
 - `POST /api/partner/diamonds` — create
 - `PUT /api/partner/diamonds/{id}` — update (only own)
 - `DELETE /api/partner/diamonds/{id}` — soft delete (only own)
 
 #### [NEW] `backend/app/Http/Controllers/Partner/PartnerOrderController.php`
+
 - `GET /api/partner/orders` — orders containing this partner's diamonds
 - Uses query scoping: `whereHas('diamonds', fn($q) => $q->where('vendor_id', auth()->id()))`
 
 #### [MODIFY] [api.php](file:///d:/Ashish%20Projects/In%20Use/e-commerce-next.js/backend/routes/api.php)
+
 - Add `partner` route group with proper middleware
 
 ### Verification
+
 - Partner can only see/edit their own diamonds
 - Partner cannot access `/admin` routes
 - Partner orders only show orders containing their stones
@@ -328,18 +357,22 @@ flowchart LR
 ### 5A — Wholesale Buyer Dashboard
 
 #### [NEW] `frontend/src/app/wholesale/layout.tsx`
+
 - B2B-focused layout, professional/corporate feel
 - Sidebar: Dashboard, Browse Inventory, My Orders, Bulk Quote, Invoices, Profile
 
 #### [NEW] `frontend/src/app/wholesale/dashboard/page.tsx`
+
 - Order history summary, pending quotes, account balance
 - Quick links: New Bulk Order, Request Quote
 
 #### [NEW] `frontend/src/app/wholesale/orders/page.tsx`
+
 - Full order history with wire/Net-30 invoice details
 - Reorder functionality
 
 #### [NEW] `frontend/src/app/wholesale/quote/page.tsx`
+
 - Bulk quote request form
 - Upload requirements list
 - Quote history & status
@@ -347,10 +380,12 @@ flowchart LR
 #### Backend Support
 
 #### [NEW] `backend/app/Http/Controllers/Wholesale/WholesaleOrderController.php`
+
 - `GET /api/wholesale/orders` — this buyer's orders only
 - `POST /api/wholesale/quote` — submit bulk quote request
 
 #### [NEW] `backend/database/migrations/xxxx_create_quotes_table.php`
+
 - Quotes table: `user_id`, `items`, `status`, `notes`, `total_estimate`
 
 ---
@@ -358,29 +393,36 @@ flowchart LR
 ### 5B — Retail Customer Account
 
 #### [NEW] `frontend/src/app/account/layout.tsx`
+
 - Clean, elegant customer account layout
 - Sidebar/tabs: Orders, Wishlist, Addresses, Profile
 
 #### [NEW] `frontend/src/app/account/page.tsx`
+
 - Account overview: recent orders, saved items count
 
 #### [NEW] `frontend/src/app/account/orders/page.tsx`
+
 - Order history with tracking numbers
 
 #### [NEW] `frontend/src/app/account/wishlist/page.tsx`
+
 - Saved/wishlisted items with quick-add-to-cart
 
 #### Backend Support
 
 #### [NEW] `backend/app/Http/Controllers/Account/AccountController.php`
+
 - `GET /api/account/orders` — retail customer's orders
 - `GET /api/account/wishlist` — manage wishlist
 - `PUT /api/account/profile` — update profile/address
 
 #### [NEW] `backend/database/migrations/xxxx_create_wishlists_table.php`
+
 - Wishlists table: `user_id`, `diamond_id` / `product_id`
 
 ### Verification
+
 - Wholesale buyer can submit a quote and see their order history
 - Retail customer can view orders and manage wishlist
 - Neither can access admin or partner routes
@@ -406,24 +448,29 @@ flowchart LR
 ### Acceptance Tests
 
 #### [NEW] `backend/tests/Feature/RoleAccessTest.php`
+
 - Test each role can only access their permitted API routes
 - Test cross-role access is blocked (e.g., Partner cannot hit admin endpoints)
 
 #### [NEW] `backend/tests/Feature/PermissionScopingTest.php`
+
 - Test that data queries are properly scoped (vendor only sees own data, etc.)
 
 ### E2E Browser Tests
+
 - Login as each role → verify correct redirect
 - Verify sidebar shows correct items per role
 - Verify CRUD operations are properly scoped
 
 ### UI Polish Pass
+
 - Consistent theme across all 4 portals (admin, partner, wholesale, account)
 - Loading states, error boundaries, empty states
 - Responsive design for mobile/tablet
 - Micro-animations and transitions
 
 ### Verification
+
 - All feature tests pass: `php artisan test`
 - Manual E2E walkthrough for each of the 5 roles
 - No 500 errors or unhandled edge cases
@@ -432,14 +479,14 @@ flowchart LR
 
 ## Summary Table
 
-| Phase | Focus | Key Deliverables | Est. Effort | Dependencies |
-|-------|-------|-----------------|-------------|--------------|
-| **1** | Backend Foundation | Granular permissions, permission middleware, API updates | ~1 session | None |
-| **2** | Auth & Routing | Login page, auth context, route protection middleware | ~1 session | Phase 1 |
-| **3** | Admin Panels | Admin shell, dynamic sidebar, dashboard, user mgmt | ~2 sessions | Phase 2 |
-| **4** | Partner Portal | Vendor dashboard, diamond CRUD, scoped orders | ~1.5 sessions | Phase 2 |
-| **5** | Buyer Portals | Wholesale B2B dashboard, retail account, quotes, wishlists | ~1.5 sessions | Phase 2 |
-| **6** | Hardening & QA | Security audit, test suite, UI polish | ~1 session | Phases 3,4,5 |
+| Phase | Focus              | Key Deliverables                                           | Est. Effort   | Dependencies |
+| ----- | ------------------ | ---------------------------------------------------------- | ------------- | ------------ |
+| **1** | Backend Foundation | Granular permissions, permission middleware, API updates   | ~1 session    | None         |
+| **2** | Auth & Routing     | Login page, auth context, route protection middleware      | ~1 session    | Phase 1      |
+| **3** | Admin Panels       | Admin shell, dynamic sidebar, dashboard, user mgmt         | ~2 sessions   | Phase 2      |
+| **4** | Partner Portal     | Vendor dashboard, diamond CRUD, scoped orders              | ~1.5 sessions | Phase 2      |
+| **5** | Buyer Portals      | Wholesale B2B dashboard, retail account, quotes, wishlists | ~1.5 sessions | Phase 2      |
+| **6** | Hardening & QA     | Security audit, test suite, UI polish                      | ~1 session    | Phases 3,4,5 |
 
 > **Total estimated effort: ~8 sessions**
 
@@ -449,6 +496,7 @@ flowchart LR
 
 > [!IMPORTANT]
 > Please review the phasing and let me know:
+>
 > 1. **Does this phase ordering make sense** for your workflow?
 > 2. **Which phase should we start with first?** (Phase 1 is the natural starting point)
 > 3. Are there any features you'd like to **move between phases** or **deprioritize**?

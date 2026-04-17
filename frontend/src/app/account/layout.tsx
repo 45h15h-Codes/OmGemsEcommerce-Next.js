@@ -1,6 +1,6 @@
-import AccountShell from "@/components/account/AccountShell";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import React from "react";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  return <AccountShell>{children}</AccountShell>;
+  return <DashboardShell role="retail" userName="Customer">{children}</DashboardShell>;
 }

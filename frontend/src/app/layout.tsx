@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
 import { Navbar } from "@/components/layout/Navbar";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -33,6 +34,7 @@ export default function RootLayout({
         <Cursor />
         <Navbar />
         {children}
+        <Toaster />
       </body>
     </html>
   );

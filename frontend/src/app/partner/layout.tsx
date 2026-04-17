@@ -1,6 +1,6 @@
-import PartnerShell from "@/components/partner/PartnerShell";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import React from "react";
 
 export default function PartnerLayout({ children }: { children: React.ReactNode }) {
-  return <PartnerShell>{children}</PartnerShell>;
+  return <DashboardShell role="partner" userName="Partner">{children}</DashboardShell>;
 }

@@ -1,110 +1,68 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '@/lib/auth';
-import { apiClient } from '@/lib/apiClient';
-import { Users, Gem, ShoppingCart, TrendingUp } from 'lucide-react';
+import React from "react";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { DataTable } from "@/components/dashboard/DataTable";
+import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { Users, Gem, ShoppingCart, DollarSign } from "lucide-react";
 
-interface Stats {
-  total_users: number;
-  total_diamonds: number;
-  total_orders: number;
-  total_revenue: number;
-}
+const chartData = [
+  { name: "Jan", revenue: 4000 },
+  { name: "Feb", revenue: 3000 },
+  { name: "Mar", revenue: 2000 },
+  { name: "Apr", revenue: 2780 },
+  { name: "May", revenue: 1890 },
+  { name: "Jun", revenue: 2390 },
+];
 
-interface Activity {
-  id: number;
-  description: string;
-  time: string;
-}
+const recentOrders = [
+  { id: "ORD-001", customer: "John Doe", amount: "$12,450", status: "completed" },
+  { id: "ORD-002", customer: "Jane Smith", amount: "$4,200", status: "processing" },
+  { id: "ORD-003", customer: "Acme Corp", amount: "$35,000", status: "pending" },
+  { id: "ORD-004", customer: "Global Gems", amount: "$8,900", status: "shipped" },
+];
 
-export default function AdminDashboard() {
-  const { user } = useAuthStore();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+const columns = [
+  { header: "Order ID", accessorKey: "id" as const },
+  { header: "Customer", accessorKey: "customer" as const },
+  { header: "Amount", accessorKey: "amount" as const },
+  { header: "Status", cell: (row: any) => <StatusBadge status={row.status} /> },
+];
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await apiClient.get('/api/admin/stats');
-        setStats(response.data.stats);
-        setActivities(response.data.recent_activity);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
+const activities = [
+  { id: 1, title: "New Order", description: "John Doe placed ORD-001", timestamp: "2 hours ago", icon: <ShoppingCart className="h-4 w-4" /> },
+  { id: 2, title: "Diamond Added", description: "1.5ct Round Brilliant added to inventory", timestamp: "5 hours ago", icon: <Gem className="h-4 w-4" /> },
+  { id: 3, title: "New User Registration", description: "Jane Smith registered as Wholesale", timestamp: "1 day ago", icon: <Users className="h-4 w-4" /> },
+];
 
-    fetchStats();
-  }, []);
-
-  const statCards = [
-    { name: 'Total Users', value: stats?.total_users || 0, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { name: 'Total Diamonds', value: stats?.total_diamonds || 0, icon: Gem, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { name: 'Total Orders', value: stats?.total_orders || 0, icon: ShoppingCart, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { name: 'Total Revenue', value: `$${(stats?.total_revenue || 0).toLocaleString()}`, icon: TrendingUp, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  ];
-
-  if (loading) {
-    return <div className="animate-pulse space-y-8">
-      <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4"></div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>)}
-      </div>
-    </div>;
-  }
-
+export default function AdminDashboardPage() {
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">Welcome back, {user?.name}. Here's what's happening today.</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold font-serif text-dashboard-text">Admin Dashboard</h1>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div key={i} className="relative overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <dt>
-                <div className={`absolute rounded-xl p-3 ${stat.bg}`}>
-                  <Icon className={`h-6 w-6 ${stat.color}`} aria-hidden="true" />
-                </div>
-                <p className="ml-16 truncate text-sm font-medium text-zinc-500 dark:text-zinc-400">{stat.name}</p>
-              </dt>
-              <dd className="ml-16 flex items-baseline pb-1 sm:pb-2 gap-2">
-                <p className="text-2xl font-semibold text-zinc-900 dark:text-white">{stat.value}</p>
-              </dd>
-            </div>
-          );
-        })}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatsCard title="Total Revenue" value="$45,231.89" icon={<DollarSign className="h-4 w-4" />} trend="+20.1%" trendDirection="up" subtitle="from last month" />
+        <StatsCard title="Total Orders" value="+2350" icon={<ShoppingCart className="h-4 w-4" />} trend="+180.1%" trendDirection="up" subtitle="from last month" />
+        <StatsCard title="Diamonds in Stock" value="12,234" icon={<Gem className="h-4 w-4" />} trend="+19%" trendDirection="up" subtitle="from last month" />
+        <StatsCard title="Active Users" value="+573" icon={<Users className="h-4 w-4" />} trend="+201" trendDirection="up" subtitle="since last hour" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="col-span-4">
+          <ChartCard title="Revenue Overview" data={chartData} type="area" dataKey="revenue" nameKey="name" />
+        </div>
+        <div className="col-span-3">
+          <ActivityFeed title="Recent Activity" activities={activities} />
+        </div>
       </div>
 
       <div className="mt-8">
-        <h2 className="text-lg font-medium tracking-tight mb-4">Recent Activity</h2>
-        <div className="overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          <ul role="list" className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {activities.map((activity) => (
-              <li key={activity.id} className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                      {activity.description}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
-                    {activity.time}
-                  </div>
-                </div>
-              </li>
-            ))}
-            {activities.length === 0 && (
-              <li className="p-8 text-center text-zinc-500">No recent activity found.</li>
-            )}
-          </ul>
-        </div>
+        <h2 className="text-lg font-semibold mb-4 text-dashboard-text">Recent Orders</h2>
+        <DataTable columns={columns} data={recentOrders} />
       </div>
     </div>
   );

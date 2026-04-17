@@ -19,6 +19,16 @@
   /* Maison specific: Champagne Gold (Used sparingly for high jewelry accents) */
   --luxury-gold: #D4AF37;
   
+  /* Dashboard unified variables */
+  --dashboard-bg: #f5f4f0;
+  --dashboard-card: #ffffff;
+  --dashboard-border: #e8e5e0;
+  --dashboard-sidebar: #1c1c1c;
+  --dashboard-accent: #D4AF37;
+  --dashboard-accent-muted: rgba(212,175,55,0.1);
+  --dashboard-text: #1c1c1c;
+  --dashboard-text-muted: #71717A;
+  
   --container-max: 1440px;
 }
 
@@ -37,6 +47,16 @@
   
   --color-border: var(--border);
   --color-gold: var(--luxury-gold);
+  
+  /* Dashboard Theme variables mapped */
+  --color-dashboard-bg: var(--dashboard-bg);
+  --color-dashboard-card: var(--dashboard-card);
+  --color-dashboard-border: var(--dashboard-border);
+  --color-dashboard-sidebar: var(--dashboard-sidebar);
+  --color-dashboard-accent: var(--dashboard-accent);
+  --color-dashboard-accent-muted: var(--dashboard-accent-muted);
+  --color-dashboard-text: var(--dashboard-text);
+  --color-dashboard-text-muted: var(--dashboard-text-muted);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-playfair), ui-serif, Georgia, serif;

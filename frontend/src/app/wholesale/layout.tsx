@@ -1,6 +1,6 @@
-import WholesaleShell from "@/components/wholesale/WholesaleShell";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import React from "react";
 
 export default function WholesaleLayout({ children }: { children: React.ReactNode }) {
-  return <WholesaleShell>{children}</WholesaleShell>;
+  return <DashboardShell role="wholesale" userName="Wholesale Client">{children}</DashboardShell>;
 }
