@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\NavLinkController;
+use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
@@ -48,6 +51,11 @@ Route::apiResource('categories', CategoryController::class)->only(['index', 'sho
 Route::apiResource('products', ProductController::class)->only(['index', 'show']);
 Route::apiResource('diamonds', DiamondController::class)->only(['index', 'show']);
 
+// Public CMS endpoints
+Route::get('/public/settings', [SettingsController::class, 'publicIndex']);
+Route::get('/public/nav-links', [NavLinkController::class, 'publicIndex']);
+Route::get('/public/pages/{slug}', [PageController::class, 'publicShow']);
+
 
 // ─────────────────────────────────────────────────────────────
 // Authenticated Routes — Any logged-in user
@@ -80,8 +88,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::apiResource('diamonds', DiamondController::class)
                 ->except(['index', 'show'])
                 ->names([
-                    'store'   => 'admin.diamonds.store',
-                    'update'  => 'admin.diamonds.update',
+                    'store' => 'admin.diamonds.store',
+                    'update' => 'admin.diamonds.update',
                     'destroy' => 'admin.diamonds.destroy',
                 ]);
         });
@@ -91,8 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::apiResource('products', ProductController::class)
                 ->except(['index', 'show'])
                 ->names([
-                    'store'   => 'admin.products.store',
-                    'update'  => 'admin.products.update',
+                    'store' => 'admin.products.store',
+                    'update' => 'admin.products.update',
                     'destroy' => 'admin.products.destroy',
                 ]);
         });
@@ -102,10 +110,26 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::apiResource('categories', CategoryController::class)
                 ->except(['index', 'show'])
                 ->names([
-                    'store'   => 'admin.categories.store',
-                    'update'  => 'admin.categories.update',
+                    'store' => 'admin.categories.store',
+                    'update' => 'admin.categories.update',
                     'destroy' => 'admin.categories.destroy',
                 ]);
+        });
+
+        // Settings / CMS management (requires manage_settings permission)
+        Route::middleware('check.permission:manage_settings')->group(function () {
+            Route::apiResource('settings', \App\Http\Controllers\Admin\SettingsController::class)
+                ->parameters(['settings' => 'key'])
+                ->only(['index', 'show', 'update']);
+            Route::post('settings/bulk-update', [\App\Http\Controllers\Admin\SettingsController::class, 'bulkUpdate']);
+
+            Route::apiResource('nav-links', \App\Http\Controllers\Admin\NavLinkController::class);
+            Route::post('nav-links/reorder', [\App\Http\Controllers\Admin\NavLinkController::class, 'reorder']);
+
+            Route::apiResource('pages', \App\Http\Controllers\Admin\PageController::class);
+
+            Route::apiResource('media', \App\Http\Controllers\Admin\MediaController::class)
+                ->except(['show']);
         });
     });
 
@@ -120,10 +144,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Partner diamond management (scoped to vendor_id = auth()->id())
         Route::apiResource('diamonds', PartnerDiamondController::class)->names([
-            'index'   => 'partner.diamonds.index',
-            'store'   => 'partner.diamonds.store',
-            'show'    => 'partner.diamonds.show',
-            'update'  => 'partner.diamonds.update',
+            'index' => 'partner.diamonds.index',
+            'store' => 'partner.diamonds.store',
+            'show' => 'partner.diamonds.show',
+            'update' => 'partner.diamonds.update',
             'destroy' => 'partner.diamonds.destroy',
         ]);
         Route::patch('diamonds/{id}/toggle', [PartnerDiamondController::class, 'toggleAvailability'])

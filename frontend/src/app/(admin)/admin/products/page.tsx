@@ -4,20 +4,19 @@ import React, { useState } from "react";
 import {
   MoreVertical,
   Filter,
-  Search,
-  Gem,
   Plus,
   Edit2,
   Trash2,
   RotateCcw,
+  Package,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { useAdminDiamonds, useDeleteAdminDiamond } from "@/hooks/useDiamonds";
-import { Diamond } from "@/types";
+import { useAdminProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { Product } from "@/types";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
-import { AdminDiamondFormModal } from "./AdminDiamondFormModal";
+import { AdminProductFormModal } from "./AdminProductFormModal";
 import { notify } from "@/lib/toast";
 import {
   DropdownMenu,
@@ -27,40 +26,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-export default function DiamondsPage() {
+export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDiamond, setSelectedDiamond] = useState<Diamond | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { hasPermission } = useAuthStore();
   const router = useRouter();
 
-  // Queries
-  const { data, isLoading, isError, refetch } = useAdminDiamonds({ page });
-  const deleteDiamond = useDeleteAdminDiamond();
+  const { data, isLoading, isError, refetch } = useAdminProducts({ page });
+  const deleteProduct = useDeleteProduct();
 
-  if (!hasPermission("manage_diamonds") && !hasPermission("Super Admin")) {
+  if (!hasPermission("manage_products") && !hasPermission("Super Admin")) {
     if (typeof window !== "undefined") router.push("/admin");
     return null;
   }
 
   const handleCreate = () => {
-    setSelectedDiamond(null);
+    setSelectedProduct(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (diamond: Diamond) => {
-    setSelectedDiamond(diamond);
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this diamond?")) {
+    if (confirm("Are you sure you want to delete this product?")) {
       try {
-        await deleteDiamond.mutateAsync(id);
-        notify.success("Diamond deleted successfully.");
+        await deleteProduct.mutateAsync(id);
+        notify.success("Product deleted successfully.");
       } catch (err: any) {
-        notify.error("Failed to delete diamond", err.message);
+        notify.error("Failed to delete product", err.message);
       }
     }
   };
@@ -83,15 +81,15 @@ export default function DiamondsPage() {
   if (isError) {
     return (
       <EmptyState
-        title="Failed to load diamonds"
-        description="There was a problem fetching the diamond inventory."
+        title="Failed to load products"
+        description="There was a problem fetching the product catalog."
         icon={RotateCcw}
         action={{ label: "Try Again", onClick: () => refetch() }}
       />
     );
   }
 
-  const diamonds = data?.data || [];
+  const products = data?.data || [];
   const meta = data;
 
   return (
@@ -99,10 +97,10 @@ export default function DiamondsPage() {
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            Diamond Inventory
+            Products Catalog
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Manage all diamonds, vendors, pricing, and availability.
+            Manage all products, pricing, and availability.
           </p>
         </div>
         <div className="mt-4 flex gap-3 sm:ml-16 sm:mt-0 sm:flex-none">
@@ -118,7 +116,7 @@ export default function DiamondsPage() {
             className="bg-amber-500 hover:bg-amber-400 text-white border-0"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Diamond
+            Add Product
           </Button>
         </div>
       </div>
@@ -134,31 +132,13 @@ export default function DiamondsPage() {
                       scope="col"
                       className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100 sm:pl-6"
                     >
-                      Diamond ID
+                      Product
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100"
                     >
-                      Shape
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100"
-                    >
-                      Weight
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100"
-                    >
-                      Color
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100"
-                    >
-                      Clarity
+                      Category
                     </th>
                     <th
                       scope="col"
@@ -174,6 +154,12 @@ export default function DiamondsPage() {
                     </th>
                     <th
                       scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+                    >
+                      Added Date
+                    </th>
+                    <th
+                      scope="col"
                       className="relative py-3.5 pl-3 pr-4 sm:pr-6"
                     >
                       <span className="sr-only">Actions</span>
@@ -181,43 +167,47 @@ export default function DiamondsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                  {diamonds.map((diamond: Diamond) => (
+                  {products.map((product: Product) => (
                     <tr
-                      key={diamond.id}
+                      key={product.id}
                       className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
                     >
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                         <div className="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
-                          <Gem className="h-4 w-4 text-zinc-400" />#
-                          {diamond.stock_number || diamond.id}
+                          <Package className="h-4 w-4 text-zinc-400" />
+                          <div className="flex flex-col">
+                            <span>{product.name}</span>
+                            <span className="text-xs text-zinc-500 font-normal">
+                              {product.slug}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400 capitalize">
-                        {diamond.shape}
-                      </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                        {diamond.carat} ct
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                        {diamond.color}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                        {diamond.clarity}
+                        {product.category?.name || (
+                          <span className="italic">Uncategorized</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-900 dark:text-white font-medium">
                         $
-                        {parseFloat(diamond.base_price as any).toLocaleString()}
+                        {parseFloat(product.base_price as any).toLocaleString()}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        {diamond.is_available ? (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                            Available
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-zinc-50 dark:bg-zinc-500/10 px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                            Sold
-                          </span>
-                        )}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            product.status === "active"
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                              : product.status === "draft"
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                : "bg-zinc-50 text-zinc-600 dark:bg-zinc-500/10 dark:text-zinc-400"
+                          }`}
+                        >
+                          {product.status.charAt(0).toUpperCase() +
+                            product.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                        {new Date(product.created_at).toLocaleDateString()}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <DropdownMenu>
@@ -232,12 +222,12 @@ export default function DiamondsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleEdit(diamond)}
+                              onClick={() => handleEdit(product)}
                             >
-                              <Edit2 className="h-4 w-4 mr-2" /> Edit Diamond
+                              <Edit2 className="h-4 w-4 mr-2" /> Edit Product
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDelete(diamond.id)}
+                              onClick={() => handleDelete(product.id)}
                               className="text-red-500 focus:text-red-600"
                             >
                               <Trash2 className="h-4 w-4 mr-2" /> Delete
@@ -247,12 +237,12 @@ export default function DiamondsPage() {
                       </td>
                     </tr>
                   ))}
-                  {diamonds.length === 0 && (
+                  {products.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="py-12 text-center">
+                      <td colSpan={6} className="py-12 text-center">
                         <div className="flex flex-col items-center gap-2 text-zinc-500">
-                          <Gem className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
-                          <p>No diamonds found in inventory.</p>
+                          <Package className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
+                          <p>No products found in catalog.</p>
                         </div>
                       </td>
                     </tr>
@@ -287,10 +277,10 @@ export default function DiamondsPage() {
         </div>
       </div>
 
-      <AdminDiamondFormModal
+      <AdminProductFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        diamond={selectedDiamond}
+        product={selectedProduct}
       />
     </div>
   );

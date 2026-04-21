@@ -1,22 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
+import React, { useState } from 'react';
 import {
   ShoppingCart, Package, Truck, CheckCircle2, Clock,
-  Eye, ChevronRight, AlertCircle
+  ChevronRight, AlertCircle, RotateCcw
 } from 'lucide-react';
 import clsx from 'clsx';
-
-interface Order {
-  id: number;
-  order_number: string;
-  customer_name: string;
-  items_count: number;
-  total: number;
-  status: string;
-  created_at: string;
-}
+import { usePartnerOrders } from '@/hooks/useOrders';
+import { Order } from '@/types';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import EmptyState from '@/components/ui/EmptyState';
+import { api } from '@/lib/apiClient';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
   pending: {
@@ -52,29 +46,16 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; co
 };
 
 export default function PartnerOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const response = await apiClient.get('/api/partner/orders');
-        setOrders(response.data.data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrders();
-  }, []);
+  const { data, isLoading, isError, refetch } = usePartnerOrders({ page });
 
   const viewOrderDetail = async (orderId: number) => {
     setLoadingDetail(true);
     try {
-      const response = await apiClient.get(`/api/partner/orders/${orderId}`);
+      const response = await api.get(`/api/partner/orders/${orderId}`);
       setSelectedOrder(response.data);
     } catch (error) {
       console.error('Error fetching order detail:', error);
@@ -89,25 +70,38 @@ export default function PartnerOrdersPage() {
     });
   };
 
-  // Summary stats
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const pendingCount = orders.filter((o) => o.status === 'pending' || o.status === 'processing').length;
-  const shippedCount = orders.filter((o) => o.status === 'shipped' || o.status === 'delivered').length;
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3" />
+      <div className="space-y-6">
+        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3 animate-pulse" />
         <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800/50 rounded-2xl" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800/50 rounded-2xl animate-pulse" />)}
         </div>
-        <div className="h-64 bg-zinc-200 dark:bg-zinc-800/50 rounded-2xl" />
+        <LoadingSkeleton variant="table" count={5} />
       </div>
     );
   }
 
+  if (isError) {
+    return (
+       <EmptyState
+        title="Failed to load orders"
+        description="There was a problem fetching your order history."
+        icon={RotateCcw}
+        action={{ label: "Try Again", onClick: () => refetch() }}
+      />
+    );
+  }
+
+  const orders = data?.data || [];
+  const meta = data;
+
+  // Summary stats calculations
+  const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
+  const pendingCount = orders.filter((o: any) => o.status === 'pending' || o.status === 'processing').length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-teal-500 mb-1">
@@ -129,7 +123,7 @@ export default function PartnerOrdersPage() {
               <ShoppingCart className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{orders.length}</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{meta?.total || 0}</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Orders</p>
             </div>
           </div>
@@ -153,8 +147,8 @@ export default function PartnerOrdersPage() {
               <CheckCircle2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">${totalRevenue.toLocaleString()}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Revenue</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Page Revenue</p>
             </div>
           </div>
         </div>
@@ -172,8 +166,8 @@ export default function PartnerOrdersPage() {
           </div>
         ) : (
           <div className="divide-y divide-zinc-50 dark:divide-zinc-800/40">
-            {orders.map((order) => {
-              const statusConf = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+            {orders.map((order: any) => {
+              const statusConf = STATUS_CONFIG[order.status?.toLowerCase()] || STATUS_CONFIG.pending;
               const StatusIcon = statusConf.icon;
 
               return (
@@ -202,7 +196,7 @@ export default function PartnerOrdersPage() {
                       </span>
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                      {order.customer_name} · {order.items_count} item{order.items_count !== 1 ? 's' : ''}
+                      {order.user?.name || "Customer"} · {order.items_count || 1} item{order.items_count !== 1 ? 's' : ''}
                     </p>
                   </div>
 
@@ -210,7 +204,7 @@ export default function PartnerOrdersPage() {
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <div className="text-right hidden sm:block">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                        ${order.total.toLocaleString()}
+                        ${Number(order.total_amount || 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-zinc-400">{formatDate(order.created_at)}</p>
                     </div>
@@ -223,9 +217,32 @@ export default function PartnerOrdersPage() {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {meta && meta.last_page > 1 && (
+        <div className="flex items-center justify-between mt-6 px-4">
+          <button 
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {meta.last_page}
+          </span>
+          <button 
+            disabled={page === meta.last_page}
+            onClick={() => setPage(page + 1)}
+            className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
@@ -239,7 +256,7 @@ export default function PartnerOrdersPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
               {loadingDetail ? (
                 <div className="flex items-center justify-center py-8">
                   <span className="h-6 w-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
@@ -249,7 +266,7 @@ export default function PartnerOrdersPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Customer</p>
-                      <p className="text-zinc-900 dark:text-white font-medium">{selectedOrder.customer_name}</p>
+                      <p className="text-zinc-900 dark:text-white font-medium">{selectedOrder.user?.name || "Customer"}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Status</p>
@@ -257,7 +274,7 @@ export default function PartnerOrdersPage() {
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Total</p>
-                      <p className="text-zinc-900 dark:text-white font-medium">${selectedOrder.total?.toLocaleString()}</p>
+                      <p className="text-zinc-900 dark:text-white font-medium">${Number(selectedOrder.total_amount || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Date</p>
@@ -276,12 +293,16 @@ export default function PartnerOrdersPage() {
                                 <Package className="h-4 w-4 text-teal-500" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-zinc-900 dark:text-white">{item.certificate_number}</p>
-                                <p className="text-[10px] text-zinc-400">{item.shape} · {item.carat} ct</p>
+                                <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                  {item.diamond?.stock_number || item.product?.name || "Item"}
+                                </p>
+                                <p className="text-[10px] text-zinc-400">
+                                  {item.diamond ? `${item.diamond.shape} · ${item.diamond.carat} ct` : "Product"}
+                                </p>
                               </div>
                             </div>
                             <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                              ${item.price?.toLocaleString()}
+                              ${Number(item.price || 0).toLocaleString()}
                             </span>
                           </div>
                         ))}

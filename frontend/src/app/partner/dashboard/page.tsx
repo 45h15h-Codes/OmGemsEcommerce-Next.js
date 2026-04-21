@@ -6,7 +6,10 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
-import { Gem, ShoppingCart, DollarSign, PackageOpen } from "lucide-react";
+import { Gem, ShoppingCart, DollarSign, PackageOpen, RotateCcw, Activity } from "lucide-react";
+import { usePartnerStats } from "@/hooks/useDashboard";
+import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
+import EmptyState from "@/components/ui/EmptyState";
 
 const chartData = [
   { name: "Mon", sales: 1200 },
@@ -18,11 +21,7 @@ const chartData = [
   { name: "Sun", sales: 2800 },
 ];
 
-const myDiamonds = [
-  { id: "D-101", shape: "Round", carat: "1.05", status: "active" },
-  { id: "D-102", shape: "Princess", carat: "2.10", status: "pending" },
-  { id: "D-103", shape: "Oval", carat: "1.50", status: "sold" },
-];
+// Render recent diamonds table if provided later, hiding static mock
 
 const columns = [
   { header: "ID", accessorKey: "id" as const },
@@ -32,17 +31,47 @@ const columns = [
 ];
 
 export default function PartnerDashboardPage() {
+  const { data, isLoading, isError, refetch } = usePartnerStats();
+
+  if (isLoading) {
+    return <LoadingSkeleton variant="dashboard" />;
+  }
+
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Failed to load dashboard data"
+        description="There was a problem fetching your partner analytics."
+        icon={RotateCcw}
+        action={{
+          label: "Try Again",
+          onClick: () => refetch(),
+        }}
+      />
+    );
+  }
+
+  const { stats, recent_activity } = data.data || data;
+
+  const activities = recent_activity?.map((act: any) => ({
+    id: act.id,
+    title: act.type === 'order' ? "New Order" : act.type === 'payment' ? "Payment Received" : "System Update",
+    description: act.description,
+    timestamp: act.time,
+    icon: <Activity className="h-4 w-4" />,
+  })) || [];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold font-serif text-dashboard-text">Partner Dashboard</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="My Earnings" value="$12,450.00" icon={<DollarSign className="h-4 w-4" />} trend="+15%" trendDirection="up" />
-        <StatsCard title="Active Listings" value="45" icon={<PackageOpen className="h-4 w-4" />} />
-        <StatsCard title="Diamonds Sold" value="12" icon={<Gem className="h-4 w-4" />} trend="+2" trendDirection="up" />
-        <StatsCard title="Pending Orders" value="3" icon={<ShoppingCart className="h-4 w-4" />} />
+        <StatsCard title="My Earnings" value={`$${(stats?.total_revenue || 0).toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} />
+        <StatsCard title="Active Listings" value={(stats?.active_diamonds || 0).toString()} icon={<PackageOpen className="h-4 w-4" />} />
+        <StatsCard title="Diamonds Sold" value={(stats?.completed_orders || 0).toString()} icon={<Gem className="h-4 w-4" />} />
+        <StatsCard title="Pending Orders" value={(stats?.pending_orders || 0).toString()} icon={<ShoppingCart className="h-4 w-4" />} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -50,26 +79,8 @@ export default function PartnerDashboardPage() {
           <ChartCard title="Weekly Sales" data={chartData} type="bar" dataKey="sales" nameKey="name" />
         </div>
         <div className="col-span-3">
-          <div className="bg-dashboard-card border border-dashboard-border rounded-xl p-6 shadow-sm h-full flex flex-col">
-            <h3 className="text-lg font-semibold mb-4 text-dashboard-text">Quick Actions</h3>
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-3 bg-dashboard-bg hover:bg-dashboard-accent/10 border border-dashboard-border rounded-lg transition-colors text-dashboard-text font-medium text-sm">
-                + Add New Diamond
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-dashboard-bg hover:bg-dashboard-accent/10 border border-dashboard-border rounded-lg transition-colors text-dashboard-text font-medium text-sm">
-                View Inventory Report
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-dashboard-bg hover:bg-dashboard-accent/10 border border-dashboard-border rounded-lg transition-colors text-dashboard-text font-medium text-sm">
-                Update Pricing
-              </button>
-            </div>
-          </div>
+          <ActivityFeed title="Recent Activity" activities={activities} />
         </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4 text-dashboard-text">My Recent Diamonds</h2>
-        <DataTable columns={columns} data={myDiamonds} />
       </div>
     </div>
   );

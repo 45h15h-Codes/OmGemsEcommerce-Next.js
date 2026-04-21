@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
+import React, { useState } from 'react';
+import { useWholesaleQuotes, useSubmitQuote } from '@/hooks/useQuotes';
+import { notify } from '@/lib/toast';
 import {
   FileText,
   Plus,
@@ -12,9 +13,12 @@ import {
   XCircle,
   Eye,
   Trash2,
+  RotateCcw,
   ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
+import EmptyState from '@/components/ui/EmptyState';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 interface QuoteItem {
   shape: string;
@@ -47,29 +51,16 @@ const COLORS = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
 const CLARITIES = ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
 
 export default function WholesaleQuote() {
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<QuoteItem[]>([
     { shape: 'Round', carat_min: 0.5, carat_max: 1.0, color: 'D', clarity: 'VS1', quantity: 10 },
   ]);
 
-  useEffect(() => {
-    fetchQuotes();
-  }, []);
+  const { data, isLoading, isError, refetch } = useWholesaleQuotes();
+  const submitQuote = useSubmitQuote();
 
-  async function fetchQuotes() {
-    try {
-      const response = await apiClient.get('/api/wholesale/quotes');
-      setQuotes(response.data.data || []);
-    } catch (error) {
-      console.error('Error fetching quotes:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const quotes = data?.data || [];
 
   const addItem = () => {
     setItems(prev => [...prev, { shape: 'Round', carat_min: 0.5, carat_max: 1.0, color: 'D', clarity: 'VS1', quantity: 5 }]);
@@ -85,28 +76,34 @@ export default function WholesaleQuote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     try {
-      await apiClient.post('/api/wholesale/quotes', { items, notes: notes || null });
+      await submitQuote.mutateAsync({ items, notes: notes || null });
       setShowForm(false);
       setItems([{ shape: 'Round', carat_min: 0.5, carat_max: 1.0, color: 'D', clarity: 'VS1', quantity: 10 }]);
       setNotes('');
-      await fetchQuotes();
-    } catch (error) {
-      console.error('Error submitting quote:', error);
-    } finally {
-      setSubmitting(false);
+      notify.success("Quote request submitted successfully");
+    } catch (error: any) {
+      notify.error("Failed to submit quote", error.message);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 bg-zinc-200 dark:bg-zinc-800/50 rounded-2xl" />
-        ))}
+      <div className="space-y-6">
+        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse" />
+        <LoadingSkeleton variant="table" count={3} />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+       <EmptyState
+        title="Failed to load quotes"
+        description="There was a problem fetching your quote history."
+        icon={RotateCcw}
+        action={{ label: "Try Again", onClick: () => refetch() }}
+      />
     );
   }
 
@@ -248,11 +245,11 @@ export default function WholesaleQuote() {
           <div className="flex gap-3">
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitQuote.isPending}
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4" />
-              {submitting ? 'Submitting...' : 'Submit Quote Request'}
+              {submitQuote.isPending ? 'Submitting...' : 'Submit Quote Request'}
             </button>
             <button
               type="button"

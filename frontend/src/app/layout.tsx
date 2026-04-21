@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers/Providers";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -31,12 +33,16 @@ export default function RootLayout({
       className={`${fontSans.variable} ${fontSerif.variable} h-full antialiased bg-background text-foreground`}
     >
       <body className="min-h-full flex flex-col">
-        <Cursor />
-        <Navbar />
-        {children}
-        <Toaster />
+        <Providers>
+          <Cursor />
+          <Navbar />
+          {children}
+          <Footer />
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
 }
+
 

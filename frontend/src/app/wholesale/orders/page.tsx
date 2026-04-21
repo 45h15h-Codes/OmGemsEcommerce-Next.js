@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
+import React, { useState } from 'react';
 import {
   ShoppingCart,
   Search,
@@ -15,17 +14,9 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import clsx from 'clsx';
-
-interface Order {
-  id: number;
-  order_number: string;
-  items_count: number;
-  total: number;
-  payment_method: string;
-  payment_status: string;
-  status: string;
-  created_at: string;
-}
+import { useWholesaleOrders } from '@/hooks/useOrders';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import EmptyState from '@/components/ui/EmptyState';
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   pending: { label: 'Pending', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
@@ -42,42 +33,43 @@ const paymentStatusConfig: Record<string, string> = {
 };
 
 export default function WholesaleOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const response = await apiClient.get('/api/wholesale/orders');
-        setOrders(response.data.data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrders();
-  }, []);
+  // We could debounce search if needed, pass search text if backend supports it
+  const { data, isLoading, isError, refetch } = useWholesaleOrders({ 
+    page, 
+    status: filterStatus === 'all' ? undefined : filterStatus,
+    search: search === '' ? undefined : search 
+  });
 
-  const filteredOrders = filterStatus === 'all'
-    ? orders
-    : orders.filter(o => o.status === filterStatus);
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4" />
-        <div className="h-12 bg-zinc-200 dark:bg-zinc-800/50 rounded-xl" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-zinc-200 dark:bg-zinc-800/50 rounded-xl" />
-        ))}
+      <div className="space-y-6">
+        <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse" />
+        <div className="h-12 bg-zinc-200 dark:bg-zinc-800/50 rounded-xl animate-pulse" />
+        <LoadingSkeleton variant="table" count={5} />
       </div>
     );
   }
 
+  if (isError) {
+    return (
+       <EmptyState
+        title="Failed to load orders"
+        description="There was a problem fetching your order history."
+        icon={RotateCcw}
+        action={{ label: "Try Again", onClick: () => refetch() }}
+      />
+    );
+  }
+
+  const orders = data?.data || [];
+  const meta = data;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-blue-500 mb-1">
@@ -98,6 +90,8 @@ export default function WholesaleOrders() {
           <input
             type="text"
             placeholder="Search by order number..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
           />
         </div>
@@ -105,7 +99,7 @@ export default function WholesaleOrders() {
           {['all', 'pending', 'processing', 'shipped', 'delivered'].map((status) => (
             <button
               key={status}
-              onClick={() => setFilterStatus(status)}
+              onClick={() => { setFilterStatus(status); setPage(1); }}
               className={clsx(
                 "px-4 py-2.5 rounded-xl text-xs font-medium transition-all capitalize",
                 filterStatus === status
@@ -135,7 +129,7 @@ export default function WholesaleOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-              {filteredOrders.map((order) => {
+              {orders.map((order: any) => {
                 const statusInfo = statusConfig[order.status] || statusConfig.pending;
                 const StatusIcon = statusInfo.icon;
                 return (
@@ -147,13 +141,13 @@ export default function WholesaleOrders() {
                       {order.items_count} stones
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-semibold text-zinc-900 dark:text-white">${order.total.toLocaleString()}</span>
+                      <span className="font-semibold text-zinc-900 dark:text-white">${Number(order.total_amount || order.total || 0).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-zinc-600 dark:text-zinc-300 text-xs">{order.payment_method}</span>
+                        <span className="text-zinc-600 dark:text-zinc-300 text-xs">{order.payment_method || 'Invoice'}</span>
                         <span className={clsx("inline-flex w-fit px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide", paymentStatusConfig[order.payment_status] || paymentStatusConfig.pending)}>
-                          {order.payment_status}
+                          {order.payment_status || 'Pending'}
                         </span>
                       </div>
                     </td>
@@ -183,7 +177,7 @@ export default function WholesaleOrders() {
           </table>
         </div>
 
-        {filteredOrders.length === 0 && (
+        {orders.length === 0 && (
           <div className="p-16 text-center">
             <ShoppingCart className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
             <p className="text-zinc-500 dark:text-zinc-400 font-medium">No orders found.</p>
@@ -191,6 +185,29 @@ export default function WholesaleOrders() {
           </div>
         )}
       </div>
+      
+      {/* Pagination Controls */}
+      {meta && meta.last_page > 1 && (
+        <div className="flex items-center justify-between mt-6 px-4">
+          <button 
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {meta.last_page}
+          </span>
+          <button 
+            disabled={page === meta.last_page}
+            onClick={() => setPage(page + 1)}
+            className="px-4 py-2 text-sm font-medium border rounded-md disabled:opacity-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

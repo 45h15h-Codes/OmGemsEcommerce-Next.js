@@ -1,53 +1,81 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
-import { MoreVertical, Shield, User as UserIcon, Plus, Mail } from 'lucide-react';
+import React, { useState } from 'react';
+import { MoreVertical, Shield, User as UserIcon, Plus, Mail, Trash2, Edit2, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  roles: { name: string }[];
-  permissions: { name: string }[];
-  created_at: string;
-}
+import { useUsers, useDeleteUser } from '@/hooks/useUsers';
+import { User } from '@/types';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import EmptyState from '@/components/ui/EmptyState';
+import { UserFormModal } from './UserFormModal';
+import { notify } from '@/lib/toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
   const { hasPermission } = useAuthStore();
   const router = useRouter();
+  
+  // React Query Hooks
+  const { data, isLoading, isError, refetch } = useUsers({ page });
+  const deleteUser = useDeleteUser();
 
-  useEffect(() => {
-    if (!hasPermission('manage_users') && !hasPermission('Super Admin')) {
-      // Prevent rendering and let middleware or parent handle redirect
-      router.push('/admin');
-      return;
-    }
+  if (!hasPermission('manage_users') && !hasPermission('Super Admin')) {
+    if (typeof window !== 'undefined') router.push('/admin');
+    return null;
+  }
 
-    async function fetchUsers() {
+  const handleCreate = () => {
+    setSelectedUser(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       try {
-        const response = await apiClient.get('/api/admin/users');
-        setUsers(response.data.data); // Assuming Laravel pagination
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
+        await deleteUser.mutateAsync(id);
+        notify.success("User deleted successfully.");
+      } catch (err: any) {
+        notify.error("Failed to delete user", err.message);
       }
     }
+  };
 
-    fetchUsers();
-  }, [hasPermission, router]);
-
-  if (loading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-10 w-48 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-      <div className="h-[400px] bg-zinc-200 dark:bg-zinc-800 rounded-2xl"></div>
-    </div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+          <div className="h-10 w-28 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+        </div>
+        <LoadingSkeleton variant="table" count={5} />
+      </div>
+    );
   }
+
+  if (isError) {
+    return (
+      <EmptyState
+        title="Failed to load users"
+        description="There was a problem fetching the user list."
+        icon={RotateCcw}
+        action={{ label: "Try Again", onClick: () => refetch() }}
+      />
+    );
+  }
+
+  const users = data?.data || [];
+  const meta = data;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -59,13 +87,10 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            type="button"
-            className="block rounded-md bg-amber-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 transition-colors flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
+          <Button onClick={handleCreate} className="bg-amber-500 hover:bg-amber-400 text-white border-0">
+            <Plus className="h-4 w-4 mr-2" />
             Add User
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -86,7 +111,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                  {users?.map((person) => (
+                  {users.map((person: User) => (
                     <tr key={person.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                         <div className="flex items-center">
@@ -100,32 +125,49 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500">
-                        {person.roles.map(r => (
-                          <span key={r.name} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
-                            {r.name === 'Super Admin' && <Shield className="h-3 w-3" />}
-                            {r.name}
-                          </span>
-                        ))}
+                        {person.roles?.map((r: any) => {
+                          const roleName = typeof r === 'string' ? r : r.name;
+                          return (
+                            <span key={roleName} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-400 mr-1">
+                              {roleName === 'Super Admin' && <Shield className="h-3 w-3" />}
+                              {roleName}
+                            </span>
+                          );
+                        })}
                       </td>
                       <td className="px-3 py-4 text-sm text-zinc-500 max-w-xs">
                         <div className="flex flex-wrap gap-1">
-                          {person.permissions.length > 0 ? person.permissions.map(p => (
-                            <span key={p.name} className="inline-flex items-center rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                              {p.name.replace('manage_', '')}
-                            </span>
-                          )) : (
+                          {person.permissions && person.permissions.length > 0 ? person.permissions.map((p: any) => {
+                            const permName = typeof p === 'string' ? p : p.name;
+                            return (
+                              <span key={permName} className="inline-flex items-center rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                {permName.replace('manage_', '')}
+                              </span>
+                            );
+                          }) : (
                             <span className="text-zinc-400 italic">Default</span>
                           )}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                        {new Date(person.created_at).toLocaleDateString()}
+                        {person.redirect_path || "N/A"}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button className="text-zinc-400 hover:text-zinc-500 transition-colors">
-                          <MoreVertical className="h-5 w-5" />
-                          <span className="sr-only">, {person.name}</span>
-                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(person)}>
+                              <Edit2 className="h-4 w-4 mr-2" /> Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(person.id)} className="text-red-500 focus:text-red-600">
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}
@@ -137,9 +179,38 @@ export default function UsersPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {meta && meta.last_page > 1 && (
+              <div className="flex items-center justify-between mt-6 px-4">
+                <Button 
+                  variant="outline" 
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {meta.last_page}
+                </span>
+                <Button 
+                  variant="outline" 
+                  disabled={page === meta.last_page}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <UserFormModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={selectedUser}
+      />
     </div>
   );
 }

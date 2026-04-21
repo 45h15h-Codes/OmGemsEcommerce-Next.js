@@ -5,13 +5,42 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppStore } from "@/store/useAppStore";
+import { useNavLinks, useSiteSettings } from "@/hooks/useSiteContent";
 import { cn } from "@/lib/utils";
+
+// ─── Static Fallback Links ──────────────────────────────────
+const FALLBACK_COLLECTIONS = [
+  { label: "High Jewelry", href: "/high-jewelry" },
+  { label: "Engagement Rings", href: "/jewelry/engagement-rings" },
+  { label: "Wedding Bands", href: "/jewelry/wedding-bands" },
+  { label: "Bracelets", href: "/jewelry/bracelets" },
+  { label: "Necklaces", href: "/jewelry/necklaces" },
+  { label: "Earrings", href: "/jewelry/earrings" },
+];
+
+const FALLBACK_B2B = [
+  { label: "Loose Diamonds", href: "/diamonds" },
+  { label: "Diamond Sourcing", href: "/diamonds" },
+  { label: "Partner Portal", href: "/partner/apply" },
+];
+
+const FALLBACK_MAISON = [
+  { label: "Our Heritage", href: "/maison" },
+  { label: "Craftsmanship", href: "/maison" },
+  { label: "Bespoke Services", href: "/high-jewelry" },
+];
 
 export const Navbar = () => {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const { isCartOpen, toggleCart } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Fetch dynamic nav links from CMS API (with 5min staleTime)
+  const { data: headerLinks } = useNavLinks("header");
+  const { data: settings } = useSiteSettings();
+
+  const siteName = settings?.site_name || "Om Gems";
 
   // Hide Navbar completely on portal routes — they have their own shell
   const isPortalRoute =
@@ -31,26 +60,31 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const collectionsLinks = [
-    { label: "High Jewelry", href: "/high-jewelry" },
-    { label: "Engagement Rings", href: "/jewelry/engagement-rings" },
-    { label: "Wedding Bands", href: "/jewelry/wedding-bands" },
-    { label: "Bracelets", href: "/jewelry/bracelets" },
-    { label: "Necklaces", href: "/jewelry/necklaces" },
-    { label: "Earrings", href: "/jewelry/earrings" },
-  ];
+  // Build menu link groups — use API links if available, else fallback
+  const hasApiLinks = headerLinks && headerLinks.length > 0;
 
-  const b2bLinks = [
-    { label: "Loose Diamonds", href: "/diamonds" },
-    { label: "Diamond Sourcing", href: "/diamonds" },
-    { label: "Partner Portal", href: "/partner/apply" },
-  ];
+  let collectionsLinks = FALLBACK_COLLECTIONS;
+  let b2bLinks = FALLBACK_B2B;
+  let maisonLinks = FALLBACK_MAISON;
 
-  const maisonLinks = [
-    { label: "Our Heritage", href: "/maison" },
-    { label: "Craftsmanship", href: "/maison" },
-    { label: "Bespoke Services", href: "/high-jewelry" },
-  ];
+  if (hasApiLinks) {
+    const active = headerLinks.filter((l) => l.is_active);
+    // Split into 3 groups by sort_order thirds
+    const chunkSize = Math.ceil(active.length / 3);
+    const chunks = [
+      active.slice(0, chunkSize),
+      active.slice(chunkSize, chunkSize * 2),
+      active.slice(chunkSize * 2),
+    ];
+    collectionsLinks =
+      chunks[0]?.map((l) => ({ label: l.label, href: l.url })) ||
+      FALLBACK_COLLECTIONS;
+    b2bLinks =
+      chunks[1]?.map((l) => ({ label: l.label, href: l.url })) || FALLBACK_B2B;
+    maisonLinks =
+      chunks[2]?.map((l) => ({ label: l.label, href: l.url })) ||
+      FALLBACK_MAISON;
+  }
 
   if (isPortalRoute) return null;
 
@@ -110,7 +144,7 @@ export const Navbar = () => {
 
         <Link href="/" className="flex-1 flex justify-center">
           <span className="font-serif text-2xl tracking-tighter uppercase font-light">
-            Om Gems
+            {siteName}
           </span>
         </Link>
 
@@ -215,7 +249,7 @@ export const Navbar = () => {
                 </Link>
               </div>
               <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-                © 2026 Om Gems Luxury
+                © {new Date().getFullYear()} {siteName}
               </div>
             </div>
           </motion.div>

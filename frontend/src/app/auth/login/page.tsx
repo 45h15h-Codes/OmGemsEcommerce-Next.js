@@ -1,47 +1,95 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuthStore } from '@/lib/auth';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuthStore } from "@/lib/auth";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// ─── Zod Schema ─────────────────────────────────────────────
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+// ─── Demo accounts for quick filling ────────────────────────
+
+const DEMO_ACCOUNTS = [
+  { label: "Super Admin", email: "admin@omgems.com" },
+  { label: "Admin", email: "manager@omgems.com" },
+  { label: "Partner", email: "vendor@partner.com" },
+  { label: "Wholesale", email: "buyer@wholesale.com" },
+  { label: "Retail", email: "customer@retail.com" },
+];
+
+// ─── Component ──────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@omgems.com');
-  const [password, setPassword] = useState('password');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
   const { login } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "admin@omgems.com",
+      password: "password",
+    },
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setServerError("");
 
     try {
-      const user = await login({ email, password });
-      
-      // Navigate to correct dashboard based on role
-      if (user.redirect_path) {
+      const user = await login(data);
+
+      // Navigate to callback URL or role-based dashboard
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else if (user.redirect_path) {
         router.push(user.redirect_path);
       } else {
-        router.push('/account'); // Fallback
+        router.push("/account"); // Fallback
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Authentication failed. Please verify your credentials.');
-    } finally {
-      setIsLoading(false);
+      const message = err.validationErrors
+        ? Object.values(err.validationErrors).flat().join(". ")
+        : err.message ||
+          "Authentication failed. Please verify your credentials.";
+      setServerError(message);
     }
+  };
+
+  const fillDemoAccount = (email: string) => {
+    setValue("email", email, { shouldValidate: true });
+    setValue("password", "password", { shouldValidate: true });
   };
 
   return (
     <div className="min-h-screen flex text-foreground bg-background selection:bg-accent selection:text-foreground">
-      {/* Left side: Editorial Image (Placeholder with elegant styling) */}
+      {/* Left side: Editorial Image */}
       <div className="hidden lg:flex w-1/2 relative bg-muted items-center justify-center overflow-hidden">
-        {/* Subtle noise texture or gradient could go here temporarily until real image */}
         <div className="absolute inset-0 bg-gradient-to-br from-background to-muted opacity-50 mix-blend-multiply" />
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
@@ -54,14 +102,13 @@ export default function LoginPage() {
             Exclusive Digital Salon
           </p>
         </motion.div>
-        
-        {/* Overlay subtle border */}
+
         <div className="absolute top-0 right-0 bottom-0 w-[1px] bg-border" />
       </div>
 
       {/* Right side: Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -73,64 +120,84 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-12">
-            <h1 className="font-serif text-3xl tracking-tight mb-3">Authentification</h1>
+            <h1 className="font-serif text-3xl tracking-tight mb-3">
+              Authentification
+            </h1>
             <p className="text-muted-foreground text-sm font-sans tracking-wide">
               Please enter your credentials to access the Maison.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8 font-sans">
-            {error && (
-              <motion.div 
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-8 font-sans"
+            noValidate
+          >
+            {/* Server error */}
+            {serverError && (
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="text-[13px] text-red-800 bg-red-50 p-4 border border-red-100"
+                animate={{ opacity: 1, height: "auto" }}
+                className="text-[13px] text-red-800 bg-red-50 dark:bg-red-950/30 dark:text-red-300 p-4 border border-red-100 dark:border-red-900/50"
               >
-                {error}
+                {serverError}
               </motion.div>
             )}
 
             <div className="space-y-6">
+              {/* Email field */}
               <div className="group relative">
                 <input
                   id="email"
                   type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  {...register("email")}
                   className="block w-full bg-transparent border-b border-border py-3 text-foreground placeholder-transparent focus:outline-none focus:border-foreground transition-colors peer text-sm"
                   placeholder="Email"
                 />
-                <label 
-                  htmlFor="email" 
+                <label
+                  htmlFor="email"
                   className="absolute left-0 top-3 text-sm text-muted-foreground transition-all peer-focus:-top-4 peer-focus:text-[11px] peer-focus:text-foreground peer-focus:uppercase tracking-wider peer-valid:-top-4 peer-valid:text-[11px] peer-valid:uppercase peer-valid:text-muted-foreground"
                 >
                   Email Address
                 </label>
+                {errors.email && (
+                  <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
+              {/* Password field */}
               <div className="group relative">
                 <input
                   id="password"
                   type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  {...register("password")}
                   className="block w-full bg-transparent border-b border-border py-3 text-foreground placeholder-transparent focus:outline-none focus:border-foreground transition-colors peer text-sm tracking-widest"
                   placeholder="Password"
                 />
-                <label 
-                  htmlFor="password" 
+                <label
+                  htmlFor="password"
                   className="absolute left-0 top-3 text-sm text-muted-foreground transition-all peer-focus:-top-4 peer-focus:text-[11px] peer-focus:text-foreground peer-focus:uppercase tracking-wider peer-valid:-top-4 peer-valid:text-[11px] peer-valid:uppercase peer-valid:text-muted-foreground cursor-text"
                 >
                   Password
                 </label>
+                {errors.password && (
+                  <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
               <div className="text-xs tracking-wider uppercase">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors pb-0.5 border-b border-transparent hover:border-foreground">
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-foreground transition-colors pb-0.5 border-b border-transparent hover:border-foreground"
+                >
                   Forgot Password?
                 </a>
               </div>
@@ -141,14 +208,30 @@ export default function LoginPage() {
                 whileHover={{ scale: 1 }}
                 whileTap={{ scale: 0.99 }}
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full flex justify-center items-center py-4 px-4 bg-foreground text-background font-sans text-xs tracking-[0.2em] uppercase hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <span className="flex items-center gap-3">
-                    <svg className="animate-spin h-4 w-4 text-background" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-4 w-4 text-background"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Authenticating
                   </span>
@@ -168,17 +251,11 @@ export default function LoginPage() {
               Demonstration Access
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              {[
-                { label: 'Super Admin', email: 'admin@omgems.com' },
-                { label: 'Admin', email: 'manager@omgems.com' },
-                { label: 'Partner', email: 'vendor@partner.com' },
-                { label: 'Wholesale', email: 'buyer@wholesale.com' },
-                { label: 'Retail', email: 'customer@retail.com' }
-              ].map(role => (
-                <button 
+              {DEMO_ACCOUNTS.map((role) => (
+                <button
                   key={role.email}
-                  type="button" 
-                  onClick={() => setEmail(role.email)} 
+                  type="button"
+                  onClick={() => fillDemoAccount(role.email)}
                   className="text-[11px] border border-border px-3 py-1.5 hover:border-foreground hover:bg-muted transition-all"
                 >
                   {role.label}

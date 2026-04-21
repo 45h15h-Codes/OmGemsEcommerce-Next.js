@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiClient, initCsrf } from './apiClient';
 
+// ─── Types ──────────────────────────────────────────────────
+
 export interface User {
   id: number;
   name: string;
@@ -17,15 +19,19 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: any) => Promise<User>;
+  isHydrated: boolean;
+  login: (credentials: { email: string; password: string }) => Promise<User>;
   logout: () => Promise<void>;
   getMe: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
+  clearAuth: () => void;
   hasPermission: (perm: string) => boolean;
   hasRole: (role: string) => boolean;
   setToken: (token: string | null) => void;
 }
 
-// Helper to set cookie for middleware
+// ─── Cookie helpers ─────────────────────────────────────────
+
 const setCookie = (name: string, value: string, days = 7) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -39,13 +45,16 @@ const removeCookie = (name: string) => {
   }
 };
 
+// ─── Store ──────────────────────────────────────────────────
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
-      isLoading: true,
+      isLoading: false,   // Start false — no flash on initial render
+      isHydrated: false,  // Tracks whether Zustand has rehydrated from localStorage
 
       setToken: (token) => {
         set({ token });
@@ -55,6 +64,51 @@ export const useAuthStore = create<AuthState>()(
           removeCookie('auth_token');
           removeCookie('user_role');
         }
+      },
+
+      /**
+       * Initialize auth on app mount. Called once by AuthProvider.
+       * - If a token exists in persisted state, validates it with /api/me
+       * - If token is invalid/expired, clears auth state silently
+       * - Sets isHydrated = true when done
+       */
+      initializeAuth: async () => {
+        const { token, isHydrated } = get();
+        if (isHydrated) return; // Already initialized
+
+        if (token) {
+          set({ isLoading: true });
+          try {
+            const response = await apiClient.get('/api/me');
+            set({
+              user: response.data,
+              isAuthenticated: true,
+              isLoading: false,
+              isHydrated: true,
+            });
+            setCookie('user_role', response.data.role);
+          } catch {
+            // Token expired or invalid — clear silently
+            get().clearAuth();
+            set({ isHydrated: true });
+          }
+        } else {
+          set({ isHydrated: true, isLoading: false });
+        }
+      },
+
+      /**
+       * Clear all auth state and cookies. Used on logout and token expiry.
+       */
+      clearAuth: () => {
+        removeCookie('auth_token');
+        removeCookie('user_role');
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       },
 
       login: async (credentials) => {
@@ -83,8 +137,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error('Logout error:', error);
         } finally {
-          get().setToken(null);
-          set({ user: null, isAuthenticated: false });
+          get().clearAuth();
           window.location.href = '/auth/login';
         }
       },
@@ -95,16 +148,15 @@ export const useAuthStore = create<AuthState>()(
           const response = await apiClient.get('/api/me');
           set({ user: response.data, isAuthenticated: true, isLoading: false });
           setCookie('user_role', response.data.role); // Update role cookie
-        } catch (error) {
-          get().setToken(null);
-          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch {
+          get().clearAuth();
         }
       },
 
       hasPermission: (perm) => {
         const { user } = get();
         if (!user) return false;
-        // Super Admin has all permissions implicitly or explicitly
+        // Super Admin has all permissions implicitly
         if (user.role === 'Super Admin') return true;
         return user.permissions.includes(perm);
       },
@@ -117,8 +169,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
       onRehydrateStorage: () => (state) => {
+        // After Zustand rehydrates from localStorage, keep isLoading false
+        // The actual validation happens in initializeAuth()
         if (state) {
           state.isLoading = false;
         }
