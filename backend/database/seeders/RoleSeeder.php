@@ -47,6 +47,21 @@ class RoleSeeder extends Seeder
             'manage_diamonds',         // Full CRUD on ALL diamonds
             'manage_products',         // Full CRUD on ALL products
             'manage_categories',       // Full CRUD on ALL categories
+            'products.view',
+            'products.create_edit',
+            'products.edit_price',
+            'products.edit_cost',
+            'products.delete',
+            'products.publish',
+            'inventory.manage',
+            'categories.manage',
+            'collections.manage',
+            'media.view',
+            'media.upload',
+            'media.delete',
+            'seo.manage',
+            'roles.manage',
+            'settings.manage',
             'manage_orders',           // View/update ALL orders
             'manage_users',            // User CRUD + role/permission assignment
             'manage_settings',         // Site-wide config, payment gateways, etc.
@@ -99,6 +114,16 @@ class RoleSeeder extends Seeder
             'manage_diamonds',
             'manage_products',
             'manage_categories',
+            'products.view',
+            'products.create_edit',
+            'products.edit_price',
+            'products.publish',
+            'inventory.manage',
+            'categories.manage',
+            'collections.manage',
+            'media.view',
+            'media.upload',
+            'seo.manage',
             'manage_orders',
             'view_reports',
             // NOTE: 'manage_users' and 'manage_settings' deliberately excluded.

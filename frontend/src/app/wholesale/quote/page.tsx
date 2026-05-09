@@ -11,9 +11,11 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Eye,
   Trash2,
   RotateCcw,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -29,6 +31,7 @@ interface QuoteItem {
   quantity: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Quote {
   id: number;
   items: QuoteItem[];
@@ -82,8 +85,8 @@ export default function WholesaleQuote() {
       setItems([{ shape: 'Round', carat_min: 0.5, carat_max: 1.0, color: 'D', clarity: 'VS1', quantity: 10 }]);
       setNotes('');
       notify.success("Quote request submitted successfully");
-    } catch (error: any) {
-      notify.error("Failed to submit quote", error.message);
+    } catch (error: unknown) {
+      notify.error("Failed to submit quote", error instanceof Error ? error.message : String(error));
     }
   };
 

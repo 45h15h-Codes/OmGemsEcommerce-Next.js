@@ -52,7 +52,7 @@ apiClient.interceptors.request.use((config) => {
 // Response interceptor to handle 401 Unauthorized globally and unwrap errors into ApiError
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<any>) => {
+  (error: AxiosError<unknown>) => {
     if (error.response?.status === 401) {
       console.warn('Unauthenticated. Redirecting to login...');
       if (typeof document !== 'undefined') {
@@ -85,15 +85,15 @@ export const api = {
     const response = await apiClient.get<T>(url, config);
     return response.data;
   },
-  post: async <T>(url: string, data?: any, config?: AxiosRequestConfig) => {
+  post: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     const response = await apiClient.post<T>(url, data, config);
     return response.data;
   },
-  put: async <T>(url: string, data?: any, config?: AxiosRequestConfig) => {
+  put: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     const response = await apiClient.put<T>(url, data, config);
     return response.data;
   },
-  patch: async <T>(url: string, data?: any, config?: AxiosRequestConfig) => {
+  patch: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
     const response = await apiClient.patch<T>(url, data, config);
     return response.data;
   },

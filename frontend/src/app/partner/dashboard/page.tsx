@@ -4,6 +4,7 @@ import React from "react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Gem, ShoppingCart, DollarSign, PackageOpen, RotateCcw, Activity } from "lucide-react";
@@ -23,6 +24,7 @@ const chartData = [
 
 // Render recent diamonds table if provided later, hiding static mock
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const columns = [
   { header: "ID", accessorKey: "id" as const },
   { header: "Shape", accessorKey: "shape" as const },

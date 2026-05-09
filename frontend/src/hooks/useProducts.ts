@@ -5,20 +5,20 @@ import { Product, PaginatedResponse } from '@/types';
 export const productKeys = {
   all: ['products'] as const,
   lists: () => [...productKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...productKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...productKeys.lists(), filters] as const,
   
   adminLists: () => [...productKeys.all, 'admin', 'list'] as const,
-  adminList: (filters: Record<string, any>) => [...productKeys.adminLists(), filters] as const,
+  adminList: (filters: Record<string, unknown>) => [...productKeys.adminLists(), filters] as const,
 };
 
-export const useProducts = (filters: Record<string, any> = {}) => {
+export const useProducts = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: productKeys.list(filters),
     queryFn: () => api.get<PaginatedResponse<Product>>('/api/products', { params: filters }),
   });
 };
 
-export const useAdminProducts = (filters: Record<string, any> = {}) => {
+export const useAdminProducts = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: productKeys.adminList(filters),
     queryFn: () => api.get<PaginatedResponse<Product>>('/api/admin/products', { params: filters }),

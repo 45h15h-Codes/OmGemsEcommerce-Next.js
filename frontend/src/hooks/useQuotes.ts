@@ -5,10 +5,10 @@ import { Quote, PaginatedResponse } from '@/types';
 export const quoteKeys = {
   all: ['quotes'] as const,
   lists: () => [...quoteKeys.all, 'list'] as const,
-  list: (role: string, filters: Record<string, any>) => [...quoteKeys.lists(), role, filters] as const,
+  list: (role: string, filters: Record<string, unknown>) => [...quoteKeys.lists(), role, filters] as const,
 };
 
-export const useWholesaleQuotes = (filters: Record<string, any> = {}) => {
+export const useWholesaleQuotes = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: quoteKeys.list('wholesale', filters),
     queryFn: () => api.get<PaginatedResponse<Quote>>('/api/wholesale/quotes', { params: filters }),
@@ -18,7 +18,7 @@ export const useWholesaleQuotes = (filters: Record<string, any> = {}) => {
 export const useSubmitQuote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post<Quote>('/api/wholesale/quotes', data),
+    mutationFn: (data: unknown) => api.post<Quote>('/api/wholesale/quotes', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: quoteKeys.all });
     },

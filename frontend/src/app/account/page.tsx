@@ -27,7 +27,7 @@ export default function AccountDashboardPage() {
     );
   }
 
-  const stats = statsData.data || statsData;
+  const stats = statsData;
   const recentOrders = ordersData?.data?.slice(0, 5).map((o: any) => ({
     id: o.order_number,
     date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),

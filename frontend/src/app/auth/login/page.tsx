@@ -69,10 +69,11 @@ export default function LoginPage() {
       } else {
         router.push("/account"); // Fallback
       }
-    } catch (err: any) {
-      const message = err.validationErrors
-        ? Object.values(err.validationErrors).flat().join(". ")
-        : err.message ||
+    } catch (err: unknown) {
+      const error = err as { validationErrors?: Record<string, string[]>; message?: string };
+      const message = error.validationErrors
+        ? Object.values(error.validationErrors).flat().join(". ")
+        : error.message ||
           "Authentication failed. Please verify your credentials.";
       setServerError(message);
     }

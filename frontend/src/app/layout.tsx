@@ -31,6 +31,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fontSans.variable} ${fontSerif.variable} h-full antialiased bg-background text-foreground`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
         <Providers>

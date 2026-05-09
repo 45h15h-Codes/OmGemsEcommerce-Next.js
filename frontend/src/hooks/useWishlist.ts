@@ -5,10 +5,10 @@ import { WishlistItem, PaginatedResponse } from '@/types';
 export const wishlistKeys = {
   all: ['wishlist'] as const,
   lists: () => [...wishlistKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...wishlistKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...wishlistKeys.lists(), filters] as const,
 };
 
-export const useWishlist = (filters: Record<string, any> = {}) => {
+export const useWishlist = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: wishlistKeys.list(filters),
     queryFn: () => api.get<PaginatedResponse<WishlistItem>>('/api/account/wishlist', { params: filters }),

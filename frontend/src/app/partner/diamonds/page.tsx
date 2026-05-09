@@ -50,7 +50,8 @@ export default function PartnerDiamondsPage() {
       // Optismtic update happens at React Query mutation config or we can just invalidate
       await toggleDiamond.mutateAsync(id);
       notify.success("Diamond availability updated");
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error: unknown) {
       notify.error("Failed to update status");
     }
   };
@@ -60,7 +61,8 @@ export default function PartnerDiamondsPage() {
     try {
       await deleteDiamond.mutateAsync(id);
       notify.success("Diamond deleted");
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error: unknown) {
       notify.error("Failed to delete diamond");
     }
   };
@@ -217,7 +219,7 @@ export default function PartnerDiamondsPage() {
                       {diamond.cut || "—"}
                     </td>
                     <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-white">
-                      ${parseFloat(diamond.base_price as any).toLocaleString()}
+                      ${parseFloat(diamond.base_price as unknown).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
                       <button

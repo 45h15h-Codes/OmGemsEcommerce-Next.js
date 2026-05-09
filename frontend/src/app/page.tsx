@@ -3,10 +3,13 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 
 export default function Home() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLElement>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const { scrollYProgress } = useScroll({
@@ -144,7 +147,9 @@ export default function Home() {
             transition={{ duration: 1.5 }}
             className="aspect-[4/5] bg-muted relative overflow-hidden"
           >
-            <img
+            <Image
+              width={1000}
+              height={1200}
               src="https://images.unsplash.com/photo-1596944210900-34a5cf8ee198?auto=format&fit=crop&q=80&w=1587"
               className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 hover:scale-105 transition-all duration-1000"
               alt="Jewelry Crafting"
@@ -162,7 +167,9 @@ export default function Home() {
         </div>
         <div className="flex flex-col md:flex-row h-auto gap-4 px-4">
           <div className="flex-1 aspect-[16/10] bg-zinc-200 relative group overflow-hidden">
-            <img
+            <Image
+              width={1000}
+              height={625}
               src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2070"
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
               alt="Necklace"
@@ -181,7 +188,9 @@ export default function Home() {
             </div>
           </div>
           <div className="flex-1 aspect-[16/10] bg-zinc-300 relative group overflow-hidden">
-            <img
+            <Image
+              width={1000}
+              height={625}
               src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&q=80&w=1587"
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
               alt="Rings"

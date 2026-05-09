@@ -25,7 +25,7 @@ The platform provides dedicated workspaces for global administrators, independen
 ## ✨ Features
 
 ### 👤 Unified Portal System
-- **Super Admin & Admin Dashboard** — Global control over users, inventory, and system analytics.
+- **Super Admin & Admin Dashboard** — Global control over users, inventory, and system analytics. The Filament Super Admin panel is branded as "Super Admin Panel" and served from `/super-admin`.
 - **Partner (Vendor) Portal** — Self-service listing management, order tracking, and sales performance for independent jewelers.
 - **Wholesale Buyer Workspace** — B2B dashboard with volume-based quote requests and credit utilization monitoring.
 - **Retail Customer Account** — Personalized order history, wishlisting, and profile management.
@@ -137,6 +137,58 @@ php artisan db:seed --class=MockDataSeeder
 
 ### Authentication Flow
 The system uses **Zustand** state management and **Axios interceptors** to handle bearer tokens. On login, the backend returns the user's role and allowed permissions, which is then used by the Next.js **edge middleware** to dynamically restrict navigation.
+
+<br/>
+
+## 🧭 Evaluation Execution Status
+
+Current evaluation execution for cloud-agent delegation:
+
+- ✅ **Phase 0 complete**: Scope lock for storefront, admin, backend flow, checks/reporting strategy.
+- ✅ **Phase 1 complete**: Baseline discovery and initial risk mapping done.
+- ▶️ **Phase 2 in progress**: Parallel deep audits for storefront, admin operations, backend integrity, and launch readiness.
+
+Execution artifacts:
+- `docs/cloud_agent_execution_runbook.md`
+- `docs/evaluation_phase0_phase1_report.md`
+
+Baseline quality signals:
+- Backend tests: passing (`php artisan test`)
+- Frontend lint: failing baseline with outstanding type/lint debt (`npm run lint`)
+
+<br/>
+
+## Catalog Integration Phase
+
+Completed implementation slice for the Super Admin to storefront product flow:
+
+- Added an additive unified catalog schema around `products`, with product type, publish status, visibility, inventory, SEO, tags, smart/manual placement, category pivots, collection pivots, relational product media, `diamond_profiles`, and `jewelry_profiles`.
+- Added `collections` for manual and smart merchandising groups such as featured luxury, diamond jewelry, engagement, and high jewelry.
+- Added `ProductPlacementService` so published products can be automatically attached to storefront categories and collections while allowing `manual_placement` overrides.
+- Added public catalog APIs under `/api/catalog/*` for products, product detail by slug, categories, collections, filters, search, and homepage sections.
+- Added API resources for product cards, product details, categories, collections, filter schema, and media.
+- Upgraded Filament product/category forms for product type, status, visibility, SEO, pricing, inventory, tags, featured placement, and primary category selection.
+- Added a Filament Collections resource so `/super-admin` can manage curated storefront collections.
+- Seeded default taxonomy for Diamonds, High Jewelry, Rings, Earrings, Necklaces, Bracelets, Engagement Rings, and default smart collections.
+- Replaced hardcoded storefront catalog pages with API-driven routes for `/diamonds`, `/jewelry/[category]`, `/high-jewelry`, `/collections/[slug]`, and `/product/[slug]`.
+- Added legacy redirects from `/diamonds/[id]` and `/jewelry/product/platinum-radiance`.
+- Added `testsprite.config.json` as the first TestSprite validation configuration.
+
+### Diamond Catalog Sync Fix
+
+- Added `DiamondCatalogSyncService` so legacy Diamond records created from the Super Admin/Partner diamond module are mirrored into the unified storefront catalog.
+- Saving a `Diamond` now creates or updates the matching `Product` and `DiamondProfile`, including price, stock state, certificate number, lab, carat, color, clarity, cut, shape, video URL, image path, and the Diamonds category placement.
+- Deleting a legacy `Diamond` now removes the mirrored catalog product so deleted stones do not remain visible on `/diamonds`.
+- Added `php artisan diamonds:sync-catalog` to backfill existing legacy diamonds into storefront catalog products.
+- Replaced free-text Super Admin diamond inputs for lab, color, clarity, cut, and shape with dropdowns so values stay aligned with storefront filters and typos like `MARQUISH` cannot be entered through the admin form.
+- Added multi-image uploads for Super Admin diamond records via `image_urls`; synced diamond catalog products now expose all uploaded image paths to storefront listing and product detail pages.
+- Fixed storefront image rendering for Laravel `/storage/...` upload paths by resolving them against `NEXT_PUBLIC_API_URL` before passing them to Next image components.
+
+Verification:
+- Backend: `php artisan test` passes with 58 tests.
+- New frontend catalog files lint clean when checked directly.
+- Full frontend lint still fails on pre-existing portal `any` type debt outside the catalog files.
+- `next build` is currently blocked by locked `.next` files held by active Node processes in the local environment.
 
 <br/>
 

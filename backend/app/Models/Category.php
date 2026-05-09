@@ -12,13 +12,19 @@ class Category extends Model
     protected $fillable = [
         'name',
         'slug',
+        'type',
         'description',
+        'meta_title',
+        'meta_description',
         'parent_id',
         'is_active',
+        'is_featured',
+        'sort_order',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     public function parent()
@@ -34,5 +40,12 @@ class Category extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function catalogProducts()
+    {
+        return $this->belongsToMany(Product::class)
+            ->withPivot(['is_primary', 'is_smart'])
+            ->withTimestamps();
     }
 }

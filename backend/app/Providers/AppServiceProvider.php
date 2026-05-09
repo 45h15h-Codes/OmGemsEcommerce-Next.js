@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\CatalogCollection;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -45,5 +49,16 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
         });
+
+        foreach ([Product::class, Category::class, CatalogCollection::class] as $model) {
+            $model::saved(fn () => $this->flushCatalogCache());
+            $model::deleted(fn () => $this->flushCatalogCache());
+        }
+    }
+
+    private function flushCatalogCache(): void
+    {
+        Cache::forget('catalog.categories.tree');
+        Cache::forget('catalog.home');
     }
 }
