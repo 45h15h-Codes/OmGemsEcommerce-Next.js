@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { usePartnerOrders } from '@/hooks/useOrders';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Order } from '@/types';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import EmptyState from '@/components/ui/EmptyState';

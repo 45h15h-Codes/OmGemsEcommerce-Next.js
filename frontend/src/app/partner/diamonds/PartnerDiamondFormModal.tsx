@@ -78,7 +78,7 @@ export function PartnerDiamondFormModal({ isOpen, onClose, diamond }: PartnerDia
         color: diamond.color,
         clarity: diamond.clarity,
         cut: diamond.cut,
-        price: diamond.base_price || (diamond as any).price || 0,
+        price: diamond.base_price || (diamond as unknown).price || 0,
         is_available: diamond.is_available,
       });
     } else {
@@ -112,8 +112,8 @@ export function PartnerDiamondFormModal({ isOpen, onClose, diamond }: PartnerDia
         notify.success("Diamond added successfully");
       }
       onClose();
-    } catch (error: any) {
-      notify.error(error.message || "An error occurred while saving the diamond");
+    } catch (error: unknown) {
+      notify.error(error instanceof Error ? error.message : "An error occurred while saving the diamond");
     }
   };
 

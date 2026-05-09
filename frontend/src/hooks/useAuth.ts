@@ -5,7 +5,7 @@ import { api } from '@/lib/apiClient';
 export const useLogin = () => {
   const login = useAuthStore(state => state.login);
   return useMutation({
-    mutationFn: (credentials: any) => login(credentials),
+    mutationFn: (credentials: unknown) => login(credentials),
   });
 };
 
@@ -18,7 +18,7 @@ export const useLogout = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: unknown) => {
       await api.get('/sanctum/csrf-cookie');
       return api.post('/api/register', data);
     }

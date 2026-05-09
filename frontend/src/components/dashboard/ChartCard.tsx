@@ -10,7 +10,7 @@ import {
 interface ChartCardProps {
   title: string;
   description?: string;
-  data: any[];
+  data: unknown[];
   type: "line" | "bar" | "area" | "pie";
   dataKey: string;
   nameKey: string;

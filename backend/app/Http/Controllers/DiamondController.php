@@ -26,6 +26,8 @@ class DiamondController extends Controller
             'specs' => 'array',
             'video_url' => 'nullable|url',
             'image_url' => 'nullable|url',
+            'image_urls' => 'nullable|array',
+            'image_urls.*' => 'string',
             'is_available' => 'boolean',
             'vendor_id' => 'required|exists:users,id',
         ]);
@@ -53,6 +55,8 @@ class DiamondController extends Controller
             'specs' => 'array',
             'video_url' => 'nullable|url',
             'image_url' => 'nullable|url',
+            'image_urls' => 'nullable|array',
+            'image_urls.*' => 'string',
             'is_available' => 'boolean',
             'vendor_id' => 'exists:users,id',
         ]);

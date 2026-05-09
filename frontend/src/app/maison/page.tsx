@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function MaisonPage() {
   return (
@@ -15,23 +16,23 @@ export default function MaisonPage() {
         >
           Since 2026 — The Maison
         </motion.div>
-        <motion.h1
+        <h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
           className="text-6xl md:text-8xl font-serif tracking-tighter uppercase font-light leading-[0.85]"
         >
           Mastery <br /> <span className="italic">Beyond Time</span>
-        </motion.h1>
+        </h1>
         <p className="mt-16 text-muted-foreground font-light tracking-widest text-sm leading-relaxed max-w-2xl mx-auto italic">
-          "A diamond is a silent poem of light. At Om Gems, we do not just trade gems; we curate the eternal."
+          &quot;A diamond is a silent poem of light. At Om Gems, we do not just trade gems; we curate the eternal.&quot;
         </p>
       </section>
 
       {/* 2. NARRATIVE SECTION : THE ORIGIN */}
       <section className="grid grid-cols-1 lg:grid-cols-2 bg-muted border-t border-b border-border">
         <div className="aspect-square relative overflow-hidden group">
-          <img 
+          <Image width={500} height={500} 
              src="https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&q=80&w=2069" 
              className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 hover:scale-105 transition-all duration-1000" 
              alt="Diamond Selection"
@@ -42,7 +43,7 @@ export default function MaisonPage() {
           <h2 className="text-4xl md:text-6xl uppercase tracking-tighter font-serif leading-[0.9]">The Pursuit of <br /> <span className="italic">Perfection</span></h2>
           <div className="space-y-8 max-w-lg">
             <p className="text-muted-foreground font-light leading-relaxed">
-               Founded in the heart of the international gem trade, Om Gems was established with a singular vision: to bring the world's most exceptional stones directly to the discerning eye. Our journey is one of relentless curation, spanning continents to identify diamonds of rare provenance.
+               Founded in the heart of the international gem trade, Om Gems was established with a singular vision: to bring the world&apos;s most exceptional stones directly to the discerning eye. Our journey is one of relentless curation, spanning continents to identify diamonds of rare provenance.
             </p>
             <p className="text-muted-foreground font-light leading-relaxed">
                For the B2B community, we represent a bridge of integrity—delivering not just inventory, but technical excellence and absolute market transparency.
@@ -82,7 +83,7 @@ export default function MaisonPage() {
 
       {/* 4. THE ATELIER VISUAL */}
       <section className="h-[60vh] relative overflow-hidden border-t border-border">
-         <img 
+         <Image width={500} height={500} 
             src="https://images.unsplash.com/photo-1531995811006-35cb42e1a022?auto=format&fit=crop&q=80&w=2070" 
             className="w-full h-full object-cover grayscale brightness-75 hover:grayscale-0 transition-all duration-1000" 
             alt="Atelier workshop"

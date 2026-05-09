@@ -44,6 +44,106 @@ export interface Product {
   category?: Category;
 }
 
+export interface CatalogMedia {
+  id?: number;
+  type?: string;
+  role?: string | null;
+  is_primary?: boolean;
+  sort_order?: number;
+  url?: string | null;
+  alt_text?: string | null;
+}
+
+export interface DiamondProfile {
+  carat?: number | string | null;
+  cut?: string | null;
+  color?: string | null;
+  clarity?: string | null;
+  shape?: string | null;
+  lab?: string | null;
+  certificate_number?: string | null;
+  certificate_url?: string | null;
+  fluorescence?: string | null;
+  polish?: string | null;
+  symmetry?: string | null;
+  measurements?: string | null;
+  origin?: string | null;
+  stone_type?: string | null;
+  depth_percent?: number | string | null;
+  table_percent?: number | string | null;
+  culet?: string | null;
+  video_url?: string | null;
+  view_360_url?: string | null;
+}
+
+export interface JewelryProfile {
+  material?: string | null;
+  metal_purity?: string | null;
+  gemstone_type?: string | null;
+  gemstone_count?: number | null;
+  total_carat_weight?: number | string | null;
+  ring_size?: string | null;
+  style?: string | null;
+  dimensions?: string | null;
+  finish_type?: string | null;
+  is_handmade?: boolean;
+  is_customizable?: boolean;
+  luxury_tags?: string[] | null;
+}
+
+export interface CatalogProduct {
+  id: number;
+  sku: string;
+  name: string;
+  slug: string;
+  product_type: 'diamond' | 'jewelry' | 'high_jewelry' | 'custom';
+  description?: string | null;
+  price: number;
+  compare_at_price?: number | null;
+  currency: string;
+  inventory_status?: string;
+  stock_quantity?: number;
+  featured?: boolean;
+  brand?: string | null;
+  collection_name?: string | null;
+  gender?: string | null;
+  occasion?: string | null;
+  primary_image?: CatalogMedia | null;
+  media?: CatalogMedia[];
+  category?: Category | null;
+  categories?: Category[];
+  collections?: CatalogCollection[];
+  diamond?: DiamondProfile | null;
+  jewelry?: JewelryProfile | null;
+  tags?: string[];
+  attributes?: Record<string, unknown>;
+  seo?: {
+    title?: string;
+    description?: string;
+    canonical_url?: string | null;
+  };
+  breadcrumbs?: { label: string; href: string }[];
+  related_products?: CatalogProduct[];
+}
+
+export interface CatalogCollection {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  type?: string;
+  is_featured?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
+}
+
+export interface CatalogFilter {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'select';
+  options?: string[];
+}
+
 export interface Category {
   id: number;
   parent_id?: number | null;
@@ -177,7 +277,7 @@ export interface CmsPage {
   id: number;
   title: string;
   slug: string;
-  sections: any[];
+  sections: unknown[];
   status: 'draft' | 'published';
   meta_title?: string;
   meta_description?: string;

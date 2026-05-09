@@ -5,18 +5,18 @@ import { Diamond, PaginatedResponse } from '@/types';
 export const diamondKeys = {
   all: ['diamonds'] as const,
   lists: () => [...diamondKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...diamondKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...diamondKeys.lists(), filters] as const,
   details: () => [...diamondKeys.all, 'detail'] as const,
   detail: (id: number) => [...diamondKeys.details(), id] as const,
   
   adminLists: () => [...diamondKeys.all, 'admin', 'list'] as const,
-  adminList: (filters: Record<string, any>) => [...diamondKeys.adminLists(), filters] as const,
+  adminList: (filters: Record<string, unknown>) => [...diamondKeys.adminLists(), filters] as const,
   
   partnerLists: () => [...diamondKeys.all, 'partner', 'list'] as const,
-  partnerList: (filters: Record<string, any>) => [...diamondKeys.partnerLists(), filters] as const,
+  partnerList: (filters: Record<string, unknown>) => [...diamondKeys.partnerLists(), filters] as const,
 };
 
-export const useDiamonds = (filters: Record<string, any> = {}) => {
+export const useDiamonds = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: diamondKeys.list(filters),
     queryFn: () => api.get<PaginatedResponse<Diamond>>('/api/diamonds', { params: filters }),
@@ -32,10 +32,10 @@ export const useDiamond = (id: number) => {
 };
 
 // Admin
-export const useAdminDiamonds = (filters: Record<string, any> = {}) => {
+export const useAdminDiamonds = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: diamondKeys.adminList(filters),
-    queryFn: () => api.get<PaginatedResponse<Diamond>>('/api/admin/diamonds', { params: filters }),
+    queryFn: () => api.get<PaginatedResponse<Diamond>>('/api/diamonds', { params: filters }),
   });
 };
 
@@ -75,7 +75,7 @@ export const useDeleteAdminDiamond = () => {
 };
 
 // Partner
-export const usePartnerDiamonds = (filters: Record<string, any> = {}) => {
+export const usePartnerDiamonds = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: diamondKeys.partnerList(filters),
     queryFn: () => api.get<PaginatedResponse<Diamond>>('/api/partner/diamonds', { params: filters }),

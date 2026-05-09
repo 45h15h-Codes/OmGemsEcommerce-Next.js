@@ -6,8 +6,12 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Category;
+use App\Models\CatalogCollection;
+use App\Models\DiamondProfile;
+use App\Models\JewelryProfile;
 use App\Models\Product;
 use App\Models\Diamond;
+use App\Services\ProductPlacementService;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Str;
 
@@ -71,31 +75,146 @@ class MockDataSeeder extends Seeder
         ]);
         $retail->assignRole('Retail Customer');
 
-        // Create a basic category
-        $category = Category::firstOrCreate([
-            'slug' => 'engagement-rings',
-        ], [
-            'name' => 'Engagement Rings',
-            'description' => 'Beautiful engagement rings for your special moment.',
-        ]);
+        $taxonomy = [
+            ['name' => 'Diamonds', 'slug' => 'diamonds', 'type' => 'diamond', 'description' => 'Certified loose diamonds with advanced grading filters.', 'sort_order' => 1],
+            ['name' => 'High Jewelry', 'slug' => 'high-jewelry', 'type' => 'jewelry', 'description' => 'Rare, atelier-level high jewelry creations.', 'sort_order' => 2, 'is_featured' => true],
+            ['name' => 'Rings', 'slug' => 'rings', 'type' => 'jewelry', 'description' => 'Solitaire, engagement, and statement rings.', 'sort_order' => 3],
+            ['name' => 'Earrings', 'slug' => 'earrings', 'type' => 'jewelry', 'description' => 'Diamond studs, drops, and sculptural earrings.', 'sort_order' => 4],
+            ['name' => 'Necklaces', 'slug' => 'necklaces', 'type' => 'jewelry', 'description' => 'Pendants and necklaces in precious metals.', 'sort_order' => 5],
+            ['name' => 'Bracelets', 'slug' => 'bracelets', 'type' => 'jewelry', 'description' => 'Bracelets and bangles crafted for daily brilliance.', 'sort_order' => 6],
+            ['name' => 'Engagement Rings', 'slug' => 'engagement-rings', 'type' => 'jewelry', 'description' => 'Beautiful engagement rings for your special moment.', 'sort_order' => 7],
+        ];
+
+        $categories = collect($taxonomy)->mapWithKeys(function (array $item) {
+            $category = Category::updateOrCreate(
+                ['slug' => $item['slug']],
+                [
+                    'name' => $item['name'],
+                    'type' => $item['type'],
+                    'description' => $item['description'],
+                    'is_active' => true,
+                    'is_featured' => $item['is_featured'] ?? false,
+                    'sort_order' => $item['sort_order'],
+                    'meta_title' => $item['name'].' | Om Gems',
+                    'meta_description' => $item['description'],
+                ]
+            );
+
+            return [$item['slug'] => $category];
+        });
+
+        foreach ([
+            ['name' => 'Featured Luxury', 'slug' => 'featured-luxury', 'type' => 'smart', 'description' => 'Homepage-ready luxury placements.', 'is_featured' => true],
+            ['name' => 'Diamond Jewelry', 'slug' => 'diamond-jewelry', 'type' => 'smart', 'description' => 'Jewelry designs featuring diamonds.', 'is_featured' => true],
+            ['name' => 'Engagement', 'slug' => 'engagement', 'type' => 'smart', 'description' => 'Solitaire and engagement-focused pieces.', 'is_featured' => true],
+            ['name' => 'High Jewelry', 'slug' => 'high-jewelry', 'type' => 'smart', 'description' => 'Rare, high-value atelier creations.', 'is_featured' => true],
+        ] as $collection) {
+            CatalogCollection::updateOrCreate(
+                ['slug' => $collection['slug']],
+                [
+                    'name' => $collection['name'],
+                    'type' => $collection['type'],
+                    'description' => $collection['description'],
+                    'is_active' => true,
+                    'is_featured' => $collection['is_featured'],
+                    'meta_title' => $collection['name'].' | Om Gems',
+                    'meta_description' => $collection['description'],
+                ]
+            );
+        }
 
         // Create a basic product
-        Product::firstOrCreate([
+        $ring = Product::updateOrCreate([
             'sku' => 'ER-001',
         ], [
             'name' => 'Classic Solitaire Engagement Ring',
             'slug' => 'classic-solitaire-engagement-ring',
+            'product_type' => 'jewelry',
+            'status' => 'published',
+            'visibility' => 'public',
+            'published_at' => now(),
             'description' => 'A timeless classic solitaire ring setting in 18K white gold.',
-            'category_id' => $category->id,
+            'category_id' => $categories['rings']->id,
             'base_price' => 850.00,
+            'currency' => 'USD',
+            'inventory_status' => 'in_stock',
+            'stock_quantity' => 3,
+            'featured' => true,
+            'brand' => 'Om Gems',
+            'collection_name' => 'Solitaire Series',
+            'tags' => ['solitaire', 'engagement', 'diamond'],
             'attributes' => [
                 'metal' => '18K White Gold',
                 'setting_type' => 'Prong',
             ],
             'media' => [
-                'https://example.com/ring-1.jpg'
+                '/diamond.png'
             ]
         ]);
+
+        JewelryProfile::updateOrCreate(
+            ['product_id' => $ring->id],
+            [
+                'material' => 'White Gold',
+                'metal_purity' => '18K',
+                'gemstone_type' => 'Diamond',
+                'gemstone_count' => 1,
+                'total_carat_weight' => 1.50,
+                'ring_size' => '6',
+                'style' => 'Solitaire',
+                'dimensions' => '2.0 mm band',
+                'finish_type' => 'High Polish',
+                'is_handmade' => true,
+                'is_customizable' => true,
+                'luxury_tags' => ['atelier', 'bridal'],
+            ]
+        );
+
+        $diamondProduct = Product::updateOrCreate([
+            'sku' => 'DIA-GIA-1234567890',
+        ], [
+            'name' => '1.05 Carat Round Diamond',
+            'slug' => '1-05-carat-round-diamond-gia-1234567890',
+            'product_type' => 'diamond',
+            'status' => 'published',
+            'visibility' => 'public',
+            'published_at' => now(),
+            'description' => 'GIA-certified round brilliant diamond with excellent polish and symmetry.',
+            'category_id' => $categories['diamonds']->id,
+            'base_price' => 4500.00,
+            'currency' => 'USD',
+            'inventory_status' => 'in_stock',
+            'stock_quantity' => 1,
+            'featured' => true,
+            'brand' => 'Om Gems',
+            'tags' => ['gia', 'round', 'certified'],
+            'media' => ['/diamond.png'],
+        ]);
+
+        DiamondProfile::updateOrCreate(
+            ['product_id' => $diamondProduct->id],
+            [
+                'carat' => 1.05,
+                'cut' => 'Excellent',
+                'color' => 'D',
+                'clarity' => 'VVS1',
+                'shape' => 'Round',
+                'lab' => 'GIA',
+                'certificate_number' => 'GIA-1234567890',
+                'fluorescence' => 'None',
+                'polish' => 'Excellent',
+                'symmetry' => 'Excellent',
+                'measurements' => '6.50 - 6.54 x 4.02 mm',
+                'origin' => 'Natural',
+                'stone_type' => 'natural',
+                'depth_percent' => 61.8,
+                'table_percent' => 57.0,
+                'culet' => 'None',
+            ]
+        );
+
+        app(ProductPlacementService::class)->assign($ring->fresh(['category', 'diamondProfile', 'jewelryProfile']));
+        app(ProductPlacementService::class)->assign($diamondProduct->fresh(['category', 'diamondProfile', 'jewelryProfile']));
 
         // Create a basic diamond
         Diamond::firstOrCreate([

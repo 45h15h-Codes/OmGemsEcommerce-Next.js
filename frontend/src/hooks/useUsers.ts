@@ -5,10 +5,10 @@ import { User, PaginatedResponse } from '@/types';
 export const userKeys = {
   all: ['users'] as const,
   lists: () => [...userKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...userKeys.lists(), filters] as const,
+  list: (filters: Record<string, unknown>) => [...userKeys.lists(), filters] as const,
 };
 
-export const useUsers = (filters: Record<string, any> = {}) => {
+export const useUsers = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: userKeys.list(filters),
     queryFn: () => api.get<PaginatedResponse<User>>('/api/admin/users', { params: filters }),

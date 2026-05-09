@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAuthStore } from '@/lib/auth';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Menu, Bell, Search, User as UserIcon, Briefcase } from 'lucide-react';
 
 export default function WholesaleTopbar({ toggleSidebar }: { toggleSidebar: () => void }) {

@@ -86,7 +86,7 @@ export default function PartnerApplyPage() {
 
           {step === 2 && (
              <div className="text-center py-12 space-y-8">
-                <p className="text-muted-foreground font-light italic">"Transparency is our foundation. Please prepare your business certificates for digital verification."</p>
+                <p className="text-muted-foreground font-light italic">&quot;Transparency is our foundation. Please prepare your business certificates for digital verification.&quot;</p>
                 <div className="border-2 border-dashed border-border py-16 px-12 flex flex-col items-center space-y-4 hover:border-primary transition-colors cursor-pointer">
                    <div className="w-12 h-12 border border-border rotate-45 flex items-center justify-center text-[10px] text-muted-foreground">+</div>
                    <p className="text-[10px] uppercase tracking-widest font-bold">Upload KYC Documents (PDF/JPG)</p>

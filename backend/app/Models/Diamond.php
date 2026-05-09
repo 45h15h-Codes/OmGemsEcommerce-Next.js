@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DiamondCatalogSyncService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +22,7 @@ class Diamond extends Model
         'specs',
         'video_url',
         'image_url',
+        'image_urls',
         'is_available',
         'vendor_id',
     ];
@@ -30,7 +32,19 @@ class Diamond extends Model
         'carat' => 'decimal:2',
         'price' => 'decimal:2',
         'specs' => 'array',
+        'image_urls' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (Diamond $diamond) {
+            app(DiamondCatalogSyncService::class)->sync($diamond);
+        });
+
+        static::deleted(function (Diamond $diamond) {
+            app(DiamondCatalogSyncService::class)->remove($diamond);
+        });
+    }
 
     public function vendor()
     {

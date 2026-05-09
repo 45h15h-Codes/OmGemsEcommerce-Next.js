@@ -19,7 +19,7 @@ export const useAdminStats = () => {
   return useQuery({
     queryKey: dashboardKeys.admin(),
     queryFn: () =>
-      api.get<AdminDashboardResponse>("/api/admin/dashboard/stats"),
+      api.get<AdminDashboardResponse>("/api/admin/stats"),
   });
 };
 
@@ -33,7 +33,7 @@ export const usePartnerStats = () => {
 export const useWholesaleStats = () => {
   return useQuery({
     queryKey: dashboardKeys.wholesale(),
-    queryFn: () => api.get<WholesaleStats>("/api/wholesale/dashboard/stats"),
+    queryFn: () => api.get<WholesaleStats>("/api/wholesale/stats"),
   });
 };
 

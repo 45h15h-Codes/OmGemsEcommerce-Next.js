@@ -15,6 +15,7 @@ import {
 import clsx from 'clsx';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import Link from "next/link";
 
 export default function AccountWishlist() {
   const [search, setSearch] = useState('');
@@ -25,10 +26,9 @@ export default function AccountWishlist() {
   // Simple frontend filtering as an example
   const allItems = data?.data || [];
   const items = search === '' 
-    ? allItems 
+    ? allItems
     : allItems.filter((item: any) => {
-        const d = item.diamond;
-        const p = item.product;
+        const d = item.diamond;        const p = item.product;
         if (d) {
           const title = `${d.shape} ${d.carat}ct ${d.color}/${d.clarity}`;
           return title.toLowerCase().includes(search.toLowerCase()) || d.certificate_number?.toLowerCase().includes(search.toLowerCase());
@@ -43,8 +43,8 @@ export default function AccountWishlist() {
     try {
       await removeItemMutation.mutateAsync(id);
       notify.success("Removed from wishlist");
-    } catch (error: any) {
-      notify.error("Failed to remove from wishlist", error.message);
+    } catch (error: unknown) {
+      notify.error("Failed to remove from wishlist", error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -53,7 +53,7 @@ export default function AccountWishlist() {
       <div className="space-y-6">
         <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-           <LoadingSkeleton variant="shop" count={3} />
+           <LoadingSkeleton variant="cards" count={3} />
         </div>
       </div>
     );
@@ -85,13 +85,13 @@ export default function AccountWishlist() {
             {allItems.length} item{allItems.length !== 1 ? 's' : ''} saved for later.
           </p>
         </div>
-        <a
+        <Link 
           href="/diamonds"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 transition-all hover:-translate-y-0.5"
         >
           <Gem className="h-4 w-4" />
           Browse Diamonds
-        </a>
+        </Link>
       </div>
 
       {/* Search */}
@@ -112,13 +112,13 @@ export default function AccountWishlist() {
           <Heart className="h-16 w-16 text-zinc-200 dark:text-zinc-700 mx-auto mb-4" />
           <p className="text-lg font-semibold text-zinc-500 dark:text-zinc-400">Your wishlist is empty</p>
           <p className="text-sm text-zinc-400 mt-1">Browse our collection and save items you love.</p>
-          <a
+          <Link 
              href="/diamonds"
             className="inline-flex items-center gap-2 mt-6 px-6 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 transition-all hover:-translate-y-0.5"
           >
             <Gem className="h-4 w-4" />
             Start Browsing
-          </a>
+          </Link>
         </div>
       ) : items.length === 0 ? (
           <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900/50 p-16 text-center">

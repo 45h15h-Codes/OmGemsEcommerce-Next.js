@@ -5,32 +5,32 @@ import { Order, PaginatedResponse } from '@/types';
 export const orderKeys = {
   all: ['orders'] as const,
   lists: () => [...orderKeys.all, 'list'] as const,
-  list: (role: string, filters: Record<string, any>) => [...orderKeys.lists(), role, filters] as const,
+  list: (role: string, filters: Record<string, unknown>) => [...orderKeys.lists(), role, filters] as const,
   detail: (id: number) => [...orderKeys.all, 'detail', id] as const,
 };
 
-export const useAdminOrders = (filters: Record<string, any> = {}) => {
+export const useAdminOrders = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: orderKeys.list('admin', filters),
     queryFn: () => api.get<PaginatedResponse<Order>>('/api/admin/orders', { params: filters }),
   });
 };
 
-export const usePartnerOrders = (filters: Record<string, any> = {}) => {
+export const usePartnerOrders = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: orderKeys.list('partner', filters),
     queryFn: () => api.get<PaginatedResponse<Order>>('/api/partner/orders', { params: filters }),
   });
 };
 
-export const useWholesaleOrders = (filters: Record<string, any> = {}) => {
+export const useWholesaleOrders = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: orderKeys.list('wholesale', filters),
     queryFn: () => api.get<PaginatedResponse<Order>>('/api/wholesale/orders', { params: filters }),
   });
 };
 
-export const useAccountOrders = (filters: Record<string, any> = {}) => {
+export const useAccountOrders = (filters: Record<string, unknown> = {}) => {
   return useQuery({
     queryKey: orderKeys.list('account', filters),
     queryFn: () => api.get<PaginatedResponse<Order>>('/api/account/orders', { params: filters }),

@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "@/store/useAppStore";
 import { useNavLinks, useSiteSettings } from "@/hooks/useSiteContent";
+import { catalogApi } from "@/lib/catalogApi";
 import { cn } from "@/lib/utils";
 
 // ─── Static Fallback Links ──────────────────────────────────
@@ -33,12 +35,18 @@ const FALLBACK_MAISON = [
 export const Navbar = () => {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isCartOpen, toggleCart } = useAppStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Fetch dynamic nav links from CMS API (with 5min staleTime)
   const { data: headerLinks } = useNavLinks("header");
   const { data: settings } = useSiteSettings();
+  const { data: catalogCategories } = useQuery({
+    queryKey: ["catalog-categories-menu"],
+    queryFn: catalogApi.categories,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const siteName = settings?.site_name || "Om Gems";
 
@@ -67,7 +75,18 @@ export const Navbar = () => {
   let b2bLinks = FALLBACK_B2B;
   let maisonLinks = FALLBACK_MAISON;
 
-  if (hasApiLinks) {
+  if (catalogCategories?.data?.length) {
+    const storefrontCategories = catalogCategories.data.filter((category) => category.slug !== "diamonds");
+    collectionsLinks = storefrontCategories.map((category) => ({
+      label: category.name,
+      href: category.slug === "high-jewelry" ? "/high-jewelry" : `/jewelry/${category.slug}`,
+    }));
+    b2bLinks = [
+      { label: "Loose Diamonds", href: "/diamonds" },
+      { label: "Diamond Sourcing", href: "/diamonds" },
+      { label: "Partner Portal", href: "/partner/apply" },
+    ];
+  } else if (hasApiLinks) {
     const active = headerLinks.filter((l) => l.is_active);
     // Split into 3 groups by sort_order thirds
     const chunkSize = Math.ceil(active.length / 3);

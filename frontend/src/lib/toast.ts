@@ -21,7 +21,7 @@ export const notify = {
     options: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: unknown) => string);
     }
   ) => {
     toast.promise(promise, options);

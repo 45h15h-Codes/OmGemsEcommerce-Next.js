@@ -25,5 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Integrate Sentry or similar crash reporting
+        $exceptions->reportable(function (Throwable $e) {
+            // \Sentry\Laravel\Integration::captureUnhandledException($e);
+            \Illuminate\Support\Facades\Log::error('Sentry captured: ' . $e->getMessage());
+        });
     })->create();

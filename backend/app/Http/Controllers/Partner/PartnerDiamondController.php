@@ -63,6 +63,8 @@ class PartnerDiamondController extends Controller
             'specs' => 'nullable|array',
             'video_url' => 'nullable|url',
             'image_url' => 'nullable|url',
+            'image_urls' => 'nullable|array',
+            'image_urls.*' => 'string',
             'is_available' => 'boolean',
         ]);
 
@@ -105,6 +107,8 @@ class PartnerDiamondController extends Controller
             'specs' => 'nullable|array',
             'video_url' => 'nullable|url',
             'image_url' => 'nullable|url',
+            'image_urls' => 'nullable|array',
+            'image_urls.*' => 'string',
             'is_available' => 'boolean',
         ]);
 
