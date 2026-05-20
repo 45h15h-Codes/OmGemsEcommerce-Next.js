@@ -33,6 +33,21 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# playwright-mcp
-.playwright-mcp/
-/docs*
+# local agent and generated reports
+/docs/
+/graphify-out/
+
+# playwright artifacts
+/.playwright-mcp/
+/playwright-report/
+/test-results/
+**/playwright-report/
+**/test-results/
+
+# TestSprite artifacts
+/testsprite_tests/
+/testsprite.config.json
+/testsprite-report/
+/testsprite-results/
+**/testsprite-report/
+**/testsprite-results/
