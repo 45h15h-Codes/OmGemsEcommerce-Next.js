@@ -21,6 +21,7 @@ class Diamond extends Model
         'price',
         'specs',
         'video_url',
+        'video_urls',
         'image_url',
         'image_urls',
         'is_available',
@@ -29,10 +30,11 @@ class Diamond extends Model
 
     protected $casts = [
         'is_available' => 'boolean',
-        'carat' => 'decimal:2',
-        'price' => 'decimal:2',
-        'specs' => 'array',
-        'image_urls' => 'array',
+        'carat'        => 'decimal:2',
+        'price'        => 'decimal:2',
+        'specs'        => 'array',
+        'image_urls'   => 'array',
+        'video_urls'   => 'array',
     ];
 
     protected static function booted(): void

@@ -52,20 +52,34 @@ class ProductDetailResource extends JsonResource
             return MediaResource::collection($this->mediaItems)->resolve();
         }
 
-        if (! is_array($this->media)) {
+        if (! is_array($this->media) || empty($this->media)) {
             return [];
         }
 
         return collect($this->media)
             ->filter()
             ->values()
-            ->map(fn (string $url, int $index) => [
-                'url' => $url,
-                'alt_text' => $this->name,
-                'type' => 'image',
-                'is_primary' => $index === 0,
-                'sort_order' => $index,
-            ])
+            ->map(function ($item, int $index) {
+                // New format: associative array with url, type, is_primary
+                if (is_array($item)) {
+                    return [
+                        'url'        => $item['url'] ?? null,
+                        'alt_text'   => $item['alt_text'] ?? $this->name,
+                        'type'       => $item['type'] ?? 'image',
+                        'is_primary' => $item['is_primary'] ?? ($index === 0),
+                        'sort_order' => $item['sort_order'] ?? $index,
+                    ];
+                }
+
+                // Legacy format: plain string URL
+                return [
+                    'url'        => $item,
+                    'alt_text'   => $this->name,
+                    'type'       => 'image',
+                    'is_primary' => $index === 0,
+                    'sort_order' => $index,
+                ];
+            })
             ->all();
     }
 

@@ -37,12 +37,17 @@ class ProductCardResource extends JsonResource
         $media = $this->media;
 
         if (is_array($media) && count($media) > 0) {
-            return [
-                'url' => $media[0],
-                'alt_text' => $this->name,
-                'type' => 'image',
-                'is_primary' => true,
-            ];
+            $item = $media[0];
+            $url = is_array($item) ? ($item['url'] ?? null) : (is_string($item) ? $item : null);
+
+            if ($url) {
+                return [
+                    'url' => $url,
+                    'alt_text' => $this->name,
+                    'type' => is_array($item) ? ($item['type'] ?? 'image') : 'image',
+                    'is_primary' => true,
+                ];
+            }
         }
 
         return null;
@@ -59,13 +64,27 @@ class ProductCardResource extends JsonResource
         return collect($media)
             ->filter()
             ->values()
-            ->map(fn (string $url, int $index) => [
-                'url' => $url,
-                'alt_text' => $this->name,
-                'type' => 'image',
-                'is_primary' => $index === 0,
-                'sort_order' => $index,
-            ])
+            ->map(function ($item, int $index) {
+                if (is_array($item)) {
+                    return [
+                        'url' => $item['url'] ?? null,
+                        'alt_text' => $item['alt_text'] ?? $this->name,
+                        'type' => $item['type'] ?? 'image',
+                        'is_primary' => $item['is_primary'] ?? ($index === 0),
+                        'sort_order' => $item['sort_order'] ?? $index,
+                    ];
+                }
+
+                return [
+                    'url' => $item,
+                    'alt_text' => $this->name,
+                    'type' => 'image',
+                    'is_primary' => $index === 0,
+                    'sort_order' => $index,
+                ];
+            })
+            ->filter(fn ($m) => !empty($m['url']))
+            ->values()
             ->all();
     }
 }

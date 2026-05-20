@@ -149,8 +149,8 @@ export default function Home() {
           >
             <Image
               width={1000}
-              height={1200}
-              src="https://images.unsplash.com/photo-1596944210900-34a5cf8ee198?auto=format&fit=crop&q=80&w=1587"
+              height={1200} 
+              src="/images/earrings.jpg"
               className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 hover:scale-105 transition-all duration-1000"
               alt="Jewelry Crafting"
             />
@@ -283,17 +283,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER MINI (Main footer in layout later) */}
-      <footer className="py-24 px-6 md:px-24 border-t border-border flex flex-col md:flex-row justify-between items-center gap-12">
-        <div className="font-serif text-2xl uppercase tracking-tighter">
-          Om Gems
-        </div>
-        <div className="flex gap-12 text-[8px] uppercase font-bold tracking-widest">
-          <Link href="/legal/privacy">Privacy Policy</Link>
-          <Link href="/support/shipping">Shipping & Returns</Link>
-          <Link href="/maison">The Maison</Link>
-        </div>
-      </footer>
     </main>
   );
 }

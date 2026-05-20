@@ -42,6 +42,7 @@ class SuperAdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
+                \App\Filament\Widgets\OrdersStatsOverview::class,
             ])
             ->middleware([
                 EncryptCookies::class,

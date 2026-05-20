@@ -25,8 +25,8 @@ The platform provides dedicated workspaces for global administrators, independen
 ## ✨ Features
 
 ### 👤 Unified Portal System
-- **Super Admin & Admin Dashboard** — Global control over users, inventory, and system analytics. The Filament Super Admin panel is branded as "Super Admin Panel" and served from `/super-admin`.
-- **Partner (Vendor) Portal** — Self-service listing management, order tracking, and sales performance for independent jewelers.
+- **Super Admin & Admin Dashboard** — Global control over users, inventory, and system analytics. The Filament Super Admin panel is served from `/super-admin` (Backend) and is accessible directly via the **Account** link in the frontend header.
+- **Partner (Vendor) Portal** — Self-service listing management, order tracking, and sales performance for independent jewelers. Login available at `/auth/login`.
 - **Wholesale Buyer Workspace** — B2B dashboard with volume-based quote requests and credit utilization monitoring.
 - **Retail Customer Account** — Personalized order history, wishlisting, and profile management.
 
@@ -146,11 +146,13 @@ Current evaluation execution for cloud-agent delegation:
 
 - ✅ **Phase 0 complete**: Scope lock for storefront, admin, backend flow, checks/reporting strategy.
 - ✅ **Phase 1 complete**: Baseline discovery and initial risk mapping done.
-- ▶️ **Phase 2 in progress**: Parallel deep audits for storefront, admin operations, backend integrity, and launch readiness.
+- ✅ **Phase 2 complete**: Parallel deep audits for storefront, admin operations, backend integrity, and launch readiness compiled into `compliance_audit_report.md`.
+- ▶️ **Phase 3 in progress**: Planning deployment setup to Hostinger/GoDaddy servers and resolving high-priority compliance gaps.
 
 Execution artifacts:
 - `docs/cloud_agent_execution_runbook.md`
 - `docs/evaluation_phase0_phase1_report.md`
+- `docs/hostinger_godaddy_deployment_plan.md`
 
 Baseline quality signals:
 - Backend tests: passing (`php artisan test`)
@@ -189,6 +191,55 @@ Verification:
 - New frontend catalog files lint clean when checked directly.
 - Full frontend lint still fails on pre-existing portal `any` type debt outside the catalog files.
 - `next build` is currently blocked by locked `.next` files held by active Node processes in the local environment.
+
+### UI Enhancements
+- Added an interactive `FramerCarousel` component to replace static image grids on product detail pages (`/product/[slug]`). Uses Framer Motion for smooth animations and Lucide React icons for controls.
+
+### ☁️ Cloudinary Media Integration
+
+Complete overhaul of media upload and delivery for the Super Admin panel (Filament) and the storefront carousel:
+
+**Backend:**
+- Installed `cloudinary/cloudinary_php` v3 SDK.
+- Created `App\Services\CloudinaryService` — reusable service for uploading images and videos to Cloudinary with automatic `resource_type` detection from MIME type (image vs video). Supports single and bulk uploads, plus deletion by public_id.
+- Added Cloudinary credentials (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_URL`) to `.env` and `config/services.php`.
+- Created `App\Filament\Concerns\HandleCloudinaryUploads` trait — intercepts `mutateFormDataBeforeCreate` / `mutateFormDataBeforeSave` on Filament pages, pushes temporary uploads to Cloudinary, writes resulting URLs back into model fields, and cleans up temp files. Reusable across all resource pages.
+- **Diamond Admin form** (`DiamondForm.php`): Added separate `FileUpload` fields for images (JPEG/PNG/WEBP/GIF) and videos (MP4/WEBM/MOV/AVI/MKV). Videos are now fully supported — no more "file type not supported" validation errors. Uploaded files are stored on Cloudinary; `image_urls`, `image_url`, `video_url`, and `video_urls` fields are populated automatically on save.
+- **Product Admin form** (`ProductForm.php`): Added Cloudinary image and video upload section; files are merged into the `media` JSON array with `{url, type, is_primary}` object structure.
+- `CreateDiamond` / `EditDiamond` / `CreateProduct` / `EditProduct` pages now use `HandleCloudinaryUploads`.
+- `DiamondCatalogSyncService.media()` now syncs both images and videos from Diamond → Product `media` array, outputting proper `{url, type, is_primary, alt_text}` objects instead of plain strings.
+- `ProductDetailResource.media()` updated to handle both legacy string-array format and new object-array format gracefully.
+- `Diamond` model: added `video_urls` (JSON, castable array) to `$fillable` and `$casts`.
+- **Migration cleanup**: `video_urls` and `image_urls` folded directly into `2026_04_07_075041_create_diamonds_table.php`; the two stale add-column migration files were deleted. Schema is clean for `migrate:fresh --seed`.
+- **Bug Fix**: Cloudinary Service now uses `resource_type => 'auto'` instead of defaulting to `image` for string file paths, preventing video upload failures. Frontend carousel data mapping (`rawMedia`) was also updated to prevent duplicate video rendering.
+
+**Frontend:**
+- `FramerCarousel` completely rebuilt with video support:
+  - Auto-detects `image` vs `video` items by URL extension and Cloudinary path pattern (`/video/upload/`), or via an explicit `type` field.
+  - Video items render a native `<video controls>` player in the main slide area.
+  - **Thumbnail strip** added below the main slide — clicking any thumbnail (image or video) jumps to that slide. Video thumbnails show a play icon overlay.
+  - All existing navigation (prev/next arrows, dot indicators, spring animation) preserved.
+- Product detail page (`/product/[slug]`): unified media list now merges `product.media`, `diamond.image_urls`, `diamond.video_urls`, and `diamond.video_url` into a single carousel item array with correct `type` metadata.
+- `resolveMediaUrl()` in `media.ts` continues to handle Cloudinary HTTPS URLs (passed through as-is) alongside legacy local `/storage/` paths.
+
+
+### 📊 Graphify Knowledge Graph
+- Integrated **Graphify** globally for project-wide knowledge mapping.
+- Maps code, documentation, images, and schemas into an interactive knowledge graph.
+- Generates `graphify-out/` with:
+    - `graph.html`: Interactive browser visualization.
+    - `GRAPH_REPORT.md`: Architecture audit and AI-suggested questions.
+    - `graph.json`: Raw graph data for AI-agent navigation.
+- Configured as an **MCP Server** for Antigravity/Gemini to enable autonomous codebase navigation.
+
+<br/>
+
+<br/>
+
+### 📦 Order Management System (Filament)
+- Began scaffolding the Unified Order Management system within Filament.
+- Implemented `OrdersTable` resource with robust column configurations (ID, Customer, Order Type, Status, Payment Status, Totals, Items count).
+- Added multi-select filters and date range filters for powerful querying of both Wholesale and Partner orders.
 
 <br/>
 

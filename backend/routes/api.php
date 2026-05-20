@@ -43,7 +43,7 @@ Route::prefix('public')->group(function () {
     Route::get('nav-links', function (Request $request) {
         return response()->json([
             'data' => NavLink::query()
-                ->when($request->input('location'), fn ($query, $location) => $query->where('location', $location))
+                ->when($request->input('location'), fn($query, $location) => $query->where('location', $location))
                 ->where('is_active', true)
                 ->orderBy('order_index')
                 ->get(),

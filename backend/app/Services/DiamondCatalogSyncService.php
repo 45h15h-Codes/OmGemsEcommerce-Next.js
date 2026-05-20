@@ -117,17 +117,56 @@ class DiamondCatalogSyncService
 
     private function media(Diamond $diamond): array
     {
-        $images = collect($diamond->image_urls ?? [])
-            ->filter()
-            ->map(fn (string $path) => $this->publicPath($path));
+        $items = collect();
+        $isPrimary = true;
 
-        if ($diamond->image_url) {
-            $images->push($this->publicPath($diamond->image_url));
+        // ── Images ────────────────────────────────────────────────────────
+        $imagePaths = collect($diamond->image_urls ?? [])
+            ->filter()
+            ->push($diamond->image_url)
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($imagePaths as $path) {
+            $items->push([
+                'url'        => $this->publicPath($path),
+                'type'       => 'image',
+                'is_primary' => $isPrimary,
+                'alt_text'   => null,
+            ]);
+            $isPrimary = false;
         }
 
-        $images = $images->unique()->values();
+        // ── Videos ────────────────────────────────────────────────────────
+        $videoPaths = collect($diamond->video_urls ?? [])
+            ->filter()
+            ->push($diamond->video_url)
+            ->filter()
+            ->unique()
+            ->values();
 
-        return $images->isNotEmpty() ? $images->all() : ['/diamond.png'];
+        foreach ($videoPaths as $path) {
+            $items->push([
+                'url'        => $this->publicPath($path),
+                'type'       => 'video',
+                'is_primary' => $isPrimary,
+                'alt_text'   => null,
+            ]);
+            $isPrimary = false;
+        }
+
+        // Fallback to placeholder image if nothing found
+        if ($items->isEmpty()) {
+            return [[
+                'url'        => '/diamond.png',
+                'type'       => 'image',
+                'is_primary' => true,
+                'alt_text'   => null,
+            ]];
+        }
+
+        return $items->all();
     }
 
     private function publicPath(string $path): string
