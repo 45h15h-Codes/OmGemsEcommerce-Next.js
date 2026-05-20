@@ -6,7 +6,7 @@ This document operationalizes the launch-readiness process, ensuring smooth depl
 
 - [ ] **Infrastructure Provisioning**: Confirm production database, Redis cache, and object storage (S3/GCS) are fully provisioned and isolated from staging.
 - [ ] **Data Migration Dry Run**: Test full data seeding/migration from legacy systems to production schema; verify 0% data loss.
-- [ ] **Environment Variables**: Verify all production secrets (payment gateways, mailers, OAuth) are populated securely in AWS Secret Manager / Vercel Env / Laravel `.env`.
+- [ ] **Environment Variables**: Verify all production secrets (payment gateways, mailers, OAuth) are populated securely in Hostinger/GoDaddy server configurations, Laravel `.env`, and PM2 `.env` or static next.config params.
 - [ ] **SSL & Domains**: Ensure primary domain and subdomains (API, CDN) have valid SSL certificates with auto-renewal enabled.
 
 ## Phase 2: Quality & Security Gates
@@ -29,7 +29,7 @@ This document operationalizes the launch-readiness process, ensuring smooth depl
 ## Phase 4: Rollback Strategy
 
 - [ ] **Database Snapshots**: Take an automated RDS/database snapshot exactly 5 minutes before the zero-downtime deployment.
-- [ ] **Blue/Green Deployment**: Verify Vercel (Frontend) and load balancer (Backend) are capable of immediate instant-rollback to the previous hash.
+- [ ] **Zero-Downtime / Symlink Rollback**: Verify the PM2/Nginx frontend symlinks and Laravel Deployer release folders are capable of immediate instant-rollback to the previous release hash.
 - [ ] **Runbook Finalized**: Incident response runbook is published, and on-call engineers are designated.
 
 ## Phase 5: Go-Live & Post-Launch

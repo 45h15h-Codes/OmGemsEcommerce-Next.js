@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ProductForm
@@ -90,13 +92,56 @@ class ProductForm
                 TextInput::make('occasion'),
                 TagsInput::make('tags')
                     ->separator(','),
-                TextInput::make('attributes'),
-                TextInput::make('media'),
+                \Filament\Forms\Components\KeyValue::make('attributes')
+                    ->keyLabel('Attribute Name')
+                    ->valueLabel('Attribute Value')
+                    ->columnSpanFull(),
                 Toggle::make('featured'),
                 Toggle::make('manual_placement')
                     ->helperText('Disable automatic category and collection placement for this product.'),
                 Toggle::make('is_active')
                     ->required(),
+
+                // ── Cloudinary Media Upload ──────────────────────────────────
+                Section::make('Product Media (Cloudinary)')
+                    ->description('Upload product images and videos. All files are stored on Cloudinary.')
+                    ->schema([
+                        FileUpload::make('_cloudinary_images_upload')
+                            ->label('Product Images')
+                            ->disk('public')
+                            ->directory('tmp-cloudinary')
+                            ->image()
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+                            ->helperText('JPEG, PNG, WEBP or GIF.')
+                            ->columnSpanFull(),
+
+                        FileUpload::make('_cloudinary_videos_upload')
+                            ->label('Product Videos')
+                            ->disk('public')
+                            ->directory('tmp-cloudinary')
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
+                            // PHP's finfo can report mp4 files as video/x-m4v, video/mp4, or video/quicktime.
+                            // We include all common aliases so validation passes regardless of detection.
+                            ->acceptedFileTypes([
+                                'video/mp4',
+                                'video/x-m4v',
+                                'video/webm',
+                                'video/ogg',
+                                'video/quicktime',
+                                'video/x-msvideo',
+                                'video/x-matroska',
+                            ])
+                            ->rules(['mimetypes:video/mp4,video/x-m4v,video/webm,video/ogg,video/quicktime,video/x-msvideo,video/x-matroska'])
+                            ->helperText('MP4, WEBM, MOV, AVI or MKV.')
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
+                // ────────────────────────────────────────────────────────────
             ]);
     }
 }

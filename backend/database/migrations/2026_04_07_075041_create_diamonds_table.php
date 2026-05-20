@@ -23,7 +23,9 @@ return new class extends Migration
             $table->decimal('price', 12, 2); // Base price
             $table->json('specs')->nullable(); // Advanced specs (polish, symmetry, fluorescence, etc.)
             $table->string('video_url')->nullable();
+            $table->json('video_urls')->nullable();  // Multiple Cloudinary video URLs
             $table->string('image_url')->nullable();
+            $table->json('image_urls')->nullable();  // Multiple Cloudinary image URLs
             $table->boolean('is_available')->default(true);
             $table->foreignId('vendor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();

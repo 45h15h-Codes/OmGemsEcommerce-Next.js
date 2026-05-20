@@ -49,6 +49,8 @@ export const Navbar = () => {
   });
 
   const siteName = settings?.site_name || "Om Gems";
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const adminUrl = `${backendUrl}/super-admin`;
 
   // Hide Navbar completely on portal routes — they have their own shell
   const isPortalRoute =
@@ -169,7 +171,7 @@ export const Navbar = () => {
 
         <div className="flex-1 flex items-center justify-end space-x-8">
           <Link
-            href="/auth/login"
+            href={adminUrl}
             prefetch={false}
             className="hidden md:block text-[10px] uppercase tracking-widest font-semibold hover:text-primary transition-colors"
           >
