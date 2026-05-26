@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,7 +35,7 @@ const DEMO_ACCOUNTS = [
 
 // ─── Component ──────────────────────────────────────────────
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [serverError, setServerError] = useState("");
   const { login } = useAuthStore();
   const router = useRouter();
@@ -267,5 +267,13 @@ export default function LoginPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><span className="text-muted-foreground">Loading...</span></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

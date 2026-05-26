@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth';
 import { api } from '@/lib/apiClient';
+import { LoginCredentials, RegisterData } from '@/types';
 
 export const useLogin = () => {
   const login = useAuthStore(state => state.login);
   return useMutation({
-    mutationFn: (credentials: unknown) => login(credentials),
+    mutationFn: (credentials: LoginCredentials) => login(credentials),
   });
 };
 
@@ -18,7 +19,7 @@ export const useLogout = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: async (data: unknown) => {
+    mutationFn: async (data: RegisterData) => {
       await api.get('/sanctum/csrf-cookie');
       return api.post('/api/register', data);
     }

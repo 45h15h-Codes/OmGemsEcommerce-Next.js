@@ -51,3 +51,6 @@ next-env.d.ts
 /testsprite-results/
 **/testsprite-report/
 **/testsprite-results/
+
+# agent skills
+.agent/skills

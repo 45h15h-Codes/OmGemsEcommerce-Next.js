@@ -2,7 +2,7 @@
 
 When the user says to use a skill, check this local skills directory first:
 
-C:\Users\ASUS\.gemini\antigravity\skills_old\skills
+./agent/skills
 
 Open the mentioned skill's `SKILL.md` file from that directory before acting.
 

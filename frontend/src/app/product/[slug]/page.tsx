@@ -10,6 +10,7 @@ import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import { resolveMediaUrl } from "@/lib/media";
 import { FramerCarousel } from "@/components/ui/framer-carousel";
+import { CatalogMedia } from "@/types";
 
 const FALLBACK_IMAGE = "/diamond.png";
 
@@ -46,12 +47,12 @@ export default function ProductDetailPage() {
   const product = query.data.data;
 
   // Build unified media list: product.media + diamond image_urls/video_urls
-  const rawMedia: Array<{ url: string; is_primary?: boolean; alt_text?: string; type?: string }> = [];
+  const rawMedia: Array<{ url: string; is_primary?: boolean; alt_text?: string | null; type?: string; [key: string]: unknown }> = [];
 
   if (product.media?.length) {
-    rawMedia.push(...product.media);
+    rawMedia.push(...product.media.filter((m: CatalogMedia) => m.url).map((m: CatalogMedia) => ({ ...m, url: m.url as string })));
   } else if (product.primary_image) {
-    rawMedia.push({ url: product.primary_image, is_primary: true });
+    rawMedia.push({ url: product.primary_image as unknown as string, is_primary: true });
   }
 
   // Inject diamond image_urls if present
@@ -71,8 +72,9 @@ export default function ProductDetailPage() {
     }
   }
   // Inject diamond primary video_url if not already covered
-  if (product.diamond?.video_url && !rawMedia.some(m => m.url === product.diamond.video_url)) {
-    rawMedia.push({ url: product.diamond.video_url, type: "video" });
+  const diamondVideoUrl = product.diamond?.video_url;
+  if (diamondVideoUrl && !rawMedia.some(m => m.url === diamondVideoUrl)) {
+    rawMedia.push({ url: diamondVideoUrl, type: "video" });
   }
 
   const heroImage = resolveMediaUrl(

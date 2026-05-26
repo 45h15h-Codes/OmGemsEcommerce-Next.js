@@ -56,7 +56,7 @@ export default function PartnerOrdersPage() {
   const viewOrderDetail = async (orderId: number) => {
     setLoadingDetail(true);
     try {
-      const response = await api.get(`/api/partner/orders/${orderId}`);
+      const response = await api.get(`/api/partner/orders/${orderId}`) as { data: any };
       setSelectedOrder(response.data);
     } catch (error) {
       console.error('Error fetching order detail:', error);

@@ -78,7 +78,7 @@ export function PartnerDiamondFormModal({ isOpen, onClose, diamond }: PartnerDia
         color: diamond.color,
         clarity: diamond.clarity,
         cut: diamond.cut,
-        price: diamond.base_price || (diamond as unknown).price || 0,
+        price: diamond.base_price || (diamond as Diamond & { price?: number }).price || 0,
         is_available: diamond.is_available,
       });
     } else {
