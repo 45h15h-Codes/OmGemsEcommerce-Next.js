@@ -317,19 +317,20 @@ class RoleAccessTest extends TestCase
     public function test_login_response_contains_role_and_redirect(): void
     {
         $user = User::factory()->create([
-            'password' => bcrypt('password'),
+            'password'          => bcrypt('password'),
             'email_verified_at' => now(),
         ]);
         $user->assignRole('Admin');
 
         $response = $this->postJson('/api/login', [
-            'email' => $user->email,
+            'email'    => $user->email,
             'password' => 'password',
         ]);
 
+        // Task 2c: access_token is now in an HttpOnly cookie, NOT in the JSON body.
+        // The response body only contains token_type and user payload for security.
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'access_token',
                 'token_type',
                 'user' => [
                     'id', 'name', 'email', 'role', 'roles', 'permissions', 'redirect_path',
@@ -337,6 +338,10 @@ class RoleAccessTest extends TestCase
             ])
             ->assertJsonPath('user.role', 'Admin')
             ->assertJsonPath('user.redirect_path', '/admin');
+
+        // Verify the auth token was set as an HttpOnly cookie
+        $setCookie = $response->headers->get('Set-Cookie', '');
+        $this->assertStringContainsString('auth_token=', $setCookie);
     }
 
     public function test_me_endpoint_returns_permissions(): void

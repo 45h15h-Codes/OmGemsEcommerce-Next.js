@@ -47,7 +47,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 15, // 15 minutes — Week 1 Auth Hardening (Task 2a)
 
     /*
     |--------------------------------------------------------------------------

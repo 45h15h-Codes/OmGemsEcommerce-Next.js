@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\CatalogCollection;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
@@ -42,10 +43,19 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // ─────────────────────────────────────────────────────
+        // Password Reset URL — Task 2d
+        // ─────────────────────────────────────────────────────
+        // Override the default reset URL (which uses the `password.reset` named
+        // Laravel route) to point to the Next.js frontend instead.
+        // This is the correct pattern for decoupled SPA + API architectures.
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            $frontendUrl = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:3000')), '/');
+            return $frontendUrl . '/auth/reset-password?token=' . $token . '&email=' . urlencode($notifiable->getEmailForPasswordReset());
+        });
+
+        // ─────────────────────────────────────────────────────
         // Super Admin Gate Bypass
         // ─────────────────────────────────────────────────────
-        // Returning true from Gate::before() bypasses ALL subsequent
-        // permission checks. Returning null falls through to normal checks.
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
         });

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('unit_price', 12, 2);
             $table->decimal('total_price', 12, 2);
             $table->json('attributes')->nullable(); // size, metal, etc.
+            $table->string('engraving_text')->nullable(); // Task 3d — custom engraving at order time
 
             $table->timestamps();
         });

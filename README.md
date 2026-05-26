@@ -236,6 +236,53 @@ Complete overhaul of media upload and delivery for the Super Admin panel (Filame
 
 <br/>
 
+### 🔐 Week 1 — Auth Hardening & Schema Migrations
+
+Complete security overhaul of the authentication model and schema expansion for production readiness.
+
+#### Auth Hardening
+
+- **Task 2a — Token Expiry**: Sanctum token lifetime set to **15 minutes** (`config/sanctum.php`) to limit the blast radius of a stolen token.
+- **Task 2b — Token Refresh**: Added `POST /api/token/refresh` endpoint. Invalidates the current Sanctum token and issues a new one — delivered via HttpOnly cookie. Prevents replay attacks on long-lived sessions.
+- **Task 2c — HttpOnly Cookie Auth**: The Sanctum token is now stored in a server-set **HttpOnly cookie** (`auth_token`). The token is **no longer returned in the JSON response body**, eliminating the XSS attack surface of JavaScript-readable tokens. Frontend (`apiClient.ts`, `auth.ts`) updated to remove all manual Bearer token injection and localStorage token storage.
+- **Task 2d — Password Reset Flow**: Added `POST /api/forgot-password` and `POST /api/reset-password` using Laravel's built-in password broker. Tokens are generated server-side and the reset link points to the Next.js frontend (`/auth/reset-password`). Registered a custom `ResetPassword::createUrlUsing()` resolver in `AppServiceProvider` to decouple from the non-existent `password.reset` named route.
+
+#### Schema Migrations (modified existing migrations — use `migrate:fresh --seed`)
+
+- **Task 3a — Soft Deletes on Products**: Added `deleted_at` column to `products` table and `SoftDeletes` trait to `Product` model. Products are now never hard-deleted.
+- **Task 3b — Product Variants**: Created `product_variants` table with `product_id`, `sku`, `name`, `price`, `stock_quantity`, `attributes`. Added `ProductVariant` model and `Product::variants()` hasMany relationship.
+- **Task 3c — Reviews**: Created `reviews` table with `user_id`, `product_id`, `rating`, `body`, `is_approved`. Unique compound index `(user_id, product_id)` enforces one review per user per product at the DB level. Added `Review` model with `Product::reviews()` and `User::reviews()` relationships.
+- **Task 3d — Engraving Text on Order Items**: Added nullable `engraving_text` column to `order_items` and included in `OrderItem::$fillable`.
+- **Task 3e — Stripe Customer ID on Users**: Added nullable unique `stripe_customer_id` column to `users` and included in `User::$fillable`.
+
+#### Test Coverage
+- **19 new tests** added across `AuthHardeningTest` and `SchemaMigrationTest`.
+- **77/77 total tests** pass with 0 regressions (`php artisan test`).
+- TDD methodology followed: all tests written before implementation code (RED → GREEN).
+
+#### Files Changed
+| File | Change |
+|---|---|
+| `backend/config/sanctum.php` | `expiration` → `15` |
+| `backend/app/Http/Controllers/Auth/AuthController.php` | HttpOnly cookie auth, refresh, forgot/reset password |
+| `backend/routes/api.php` | Added `/token/refresh`, `/forgot-password`, `/reset-password` routes |
+| `backend/app/Providers/AppServiceProvider.php` | `ResetPassword::createUrlUsing()` for frontend URL |
+| `backend/database/migrations/...create_products_table.php` | Added `softDeletes()` |
+| `backend/database/migrations/...create_order_items_table.php` | Added `engraving_text` |
+| `backend/database/migrations/0001_01_01_000000_create_users_table.php` | Added `stripe_customer_id` |
+| `backend/database/migrations/2026_05_26_000001_create_product_variants_table.php` | **New** — product variants |
+| `backend/database/migrations/2026_05_26_000002_create_reviews_table.php` | **New** — reviews with unique index |
+| `backend/app/Models/Product.php` | `SoftDeletes`, `variants()`, `reviews()` |
+| `backend/app/Models/User.php` | `stripe_customer_id` in `$fillable`, `reviews()` relationship |
+| `backend/app/Models/OrderItem.php` | `engraving_text` in `$fillable` |
+| `backend/app/Models/ProductVariant.php` | **New** model |
+| `backend/app/Models/Review.php` | **New** model |
+| `backend/database/factories/ProductFactory.php` | **New** factory for tests |
+| `frontend/src/lib/apiClient.ts` | Removed Bearer token interceptor |
+| `frontend/src/lib/auth.ts` | Removed token from state; cookie-based session model |
+
+<br/>
+
 ### 📦 Order Management System (Filament)
 - Began scaffolding the Unified Order Management system within Filament.
 - Implemented `OrdersTable` resource with robust column configurations (ID, Customer, Order Type, Status, Payment Status, Totals, Items count).

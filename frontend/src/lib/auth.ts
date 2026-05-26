@@ -16,7 +16,6 @@ export interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isHydrated: boolean;
@@ -27,55 +26,39 @@ interface AuthState {
   clearAuth: () => void;
   hasPermission: (perm: string) => boolean;
   hasRole: (role: string) => boolean;
-  setToken: (token: string | null) => void;
 }
-
-// ─── Cookie helpers ─────────────────────────────────────────
-
-const setCookie = (name: string, value: string, days = 7) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString();
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-  }
-};
-
-const removeCookie = (name: string) => {
-  if (typeof document !== 'undefined') {
-    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  }
-};
 
 // ─── Store ──────────────────────────────────────────────────
 
+/**
+ * Auth store — Task 2c: HttpOnly Cookie Model
+ *
+ * The Sanctum token is now stored in an HttpOnly cookie managed entirely
+ * by the backend. This store NO LONGER holds or manages the raw token.
+ * All authenticated requests automatically include the cookie via
+ * axios `withCredentials: true`.
+ *
+ * What this store persists: user profile + isAuthenticated flag only.
+ * The token itself never touches JS memory or localStorage.
+ */
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
-      isLoading: false,   // Start false — no flash on initial render
-      isHydrated: false,  // Tracks whether Zustand has rehydrated from localStorage
-
-      setToken: (token) => {
-        set({ token });
-        if (token) {
-          setCookie('auth_token', token);
-        } else {
-          removeCookie('auth_token');
-        }
-      },
+      isLoading: false,
+      isHydrated: false,
 
       /**
        * Initialize auth on app mount. Called once by AuthProvider.
-       * - If a token exists in persisted state, validates it with /api/me
-       * - If token is invalid/expired, clears auth state silently
-       * - Sets isHydrated = true when done
+       * Validates session by calling /api/me — if the HttpOnly cookie
+       * is present and valid, the user object is returned.
        */
       initializeAuth: async () => {
-        const { token, isHydrated } = get();
+        const { isHydrated, isAuthenticated } = get();
         if (isHydrated) return; // Already initialized
 
-        if (token) {
+        if (isAuthenticated) {
           set({ isLoading: true });
           try {
             const response = await apiClient.get('/api/me');
@@ -86,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
               isHydrated: true,
             });
           } catch {
-            // Token expired or invalid — clear silently
+            // Cookie expired or invalid — clear state silently
             get().clearAuth();
             set({ isHydrated: true });
           }
@@ -96,26 +79,28 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Clear all auth state and cookies. Used on logout and token expiry.
+       * Clear all client-side auth state.
+       * The HttpOnly cookie is cleared by the server on logout.
        */
       clearAuth: () => {
-        removeCookie('auth_token');
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
           isLoading: false,
         });
       },
 
+      /**
+       * Login — CSRF handshake first, then POST credentials.
+       * Backend sets the HttpOnly 'auth_token' cookie in the response.
+       * We only persist the user object in the store.
+       */
       login: async (credentials) => {
         set({ isLoading: true });
         try {
           await initCsrf(); // Ensure CSRF token is set before state-mutating requests
           const response = await apiClient.post('/api/login', credentials);
-          const { access_token, user } = response.data;
-          
-          get().setToken(access_token);
+          const { user } = response.data; // No access_token — it's in the HttpOnly cookie
 
           set({ user, isAuthenticated: true, isLoading: false });
           return user;
@@ -125,16 +110,19 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      /**
+       * Logout — tells the server to delete the token and expire the cookie.
+       */
       logout: async () => {
         try {
-          if (get().token) {
-            await apiClient.post('/api/logout');
-          }
+          await apiClient.post('/api/logout');
         } catch (error) {
           console.error('Logout error:', error);
         } finally {
           get().clearAuth();
-          window.location.href = '/auth/login';
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login';
+          }
         }
       },
 
@@ -151,7 +139,6 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (perm) => {
         const { user } = get();
         if (!user) return false;
-        // Super Admin has all permissions implicitly
         if (user.role === 'Super Admin') return true;
         return user.permissions.includes(perm);
       },
@@ -164,14 +151,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Only persist user profile + auth flag — never persist a raw token
       partialize: (state) => ({
-        token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        // After Zustand rehydrates from localStorage, keep isLoading false
-        // The actual validation happens in initializeAuth()
         if (state) {
           state.isLoading = false;
         }
