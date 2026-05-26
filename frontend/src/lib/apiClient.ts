@@ -18,6 +18,12 @@ export class ApiError extends Error {
 
 /**
  * Configure global axios instance to interface with Laravel backend.
+ *
+ * Security (Task 2c — HttpOnly Cookie Auth):
+ *   - withCredentials: true  → sends the HttpOnly 'auth_token' cookie automatically
+ *   - withXSRFToken: true    → sends Laravel's XSRF-TOKEN cookie as X-XSRF-TOKEN header
+ *   - NO manual Bearer token injection — the server reads the HttpOnly cookie directly.
+ *     This removes the XSS attack surface of JS-accessible tokens.
  */
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -26,53 +32,40 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true,
-  withXSRFToken: true,
+  withCredentials: true,   // Required: sends HttpOnly cookie on cross-origin requests
+  withXSRFToken: true,     // Required: sends CSRF token header automatically
 });
 
 /**
  * Perform a Sanctum CSRF-cookie initialization request.
+ * Must be called before any state-mutating request (login, register).
  */
 export const initCsrf = async () => {
   await apiClient.get('/sanctum/csrf-cookie');
 };
 
-// Request interceptor to inject Bearer token
-apiClient.interceptors.request.use((config) => {
-  if (typeof document !== 'undefined') {
-    // Read token from cookie
-    const match = document.cookie.match(new RegExp('(^| )auth_token=([^;]+)'));
-    if (match && match[2]) {
-      config.headers.Authorization = `Bearer ${decodeURIComponent(match[2])}`;
-    }
-  }
-  return config;
-});
-
-// Response interceptor to handle 401 Unauthorized globally and unwrap errors into ApiError
+// Response interceptor — handle 401 Unauthorized globally and unwrap errors into ApiError
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {
     if (error.response?.status === 401) {
       console.warn('Unauthenticated. Redirecting to login...');
-      if (typeof document !== 'undefined') {
-        const pastDate = 'Thu, 01 Jan 1970 00:00:01 GMT';
-        document.cookie = `auth_token=; path=/; expires=${pastDate};`;
-        document.cookie = `user_role=; path=/; expires=${pastDate};`;
+      // No cookie manipulation needed — the server expires the HttpOnly cookie on logout.
+      // We only clear client-side state here.
+      if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-storage');
         window.location.href = '/auth/login';
       }
     }
-    
-    // Check if it's a 5xx error to potentially retry (simple implementation on interceptor level)
+
     if (error.response && error.response.status >= 500) {
       console.error('Server error encountered:', error.response.status);
     }
-    
+
     const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
     const validationErrors = error.response?.data?.errors;
     const status = error.response?.status;
-    
+
     return Promise.reject(new ApiError(message, status, validationErrors));
   }
 );

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Services\ProductPlacementService;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'sku',
@@ -95,6 +96,22 @@ class Product extends Model
     public function jewelryProfile()
     {
         return $this->hasOne(JewelryProfile::class);
+    }
+
+    /**
+     * Task 3b — A product has many purchasable variants.
+     */
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * Task 3c — A product can have many reviews from customers.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 
     public function scopePublished($query)

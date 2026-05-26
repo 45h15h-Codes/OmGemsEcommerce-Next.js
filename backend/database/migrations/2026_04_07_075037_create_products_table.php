@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('attributes')->nullable(); // Flexible product attributes
             $table->json('media')->nullable(); // Array of image/video URLs
             $table->boolean('is_active')->default(true);
+            $table->softDeletes(); // Task 3a — prevents hard deletes of products
             $table->timestamps();
         });
     }

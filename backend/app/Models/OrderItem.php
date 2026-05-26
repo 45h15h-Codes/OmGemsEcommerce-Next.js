@@ -18,6 +18,7 @@ class OrderItem extends Model
         'unit_price',
         'total_price',
         'attributes',
+        'engraving_text', // Task 3d — custom engraving text captured at order time
     ];
 
     protected $casts = [
