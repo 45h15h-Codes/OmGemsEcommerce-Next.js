@@ -74,6 +74,8 @@ export interface DiamondProfile {
   culet?: string | null;
   video_url?: string | null;
   view_360_url?: string | null;
+  image_urls?: string[];
+  video_urls?: string[];
 }
 
 export interface JewelryProfile {
@@ -160,6 +162,9 @@ export interface Order {
   order_number: string;
   total_amount: number;
   status: string;
+  items_count?: number;
+  tracking_number?: string | null;
+  items?: any[];
   created_at: string;
   updated_at: string;
   user?: User;
@@ -170,6 +175,10 @@ export interface Quote {
   user_id: number;
   status: string;
   total_estimated_value: number;
+  total_estimate?: number;
+  notes?: string | null;
+  admin_notes?: string | null;
+  items: QuoteItem[];
   created_at: string;
   updated_at: string;
 }
@@ -179,6 +188,18 @@ export interface QuoteItem {
   quote_id: number;
   diamond_id?: number | null;
   product_id?: number | null;
+  quantity: number;
+  name?: string;
+  price?: number;
+  shape?: string;
+  carat_min?: number;
+  carat_max?: number;
+  color_range?: string;
+  clarity_range?: string;
+  color?: string;
+  clarity?: string;
+  diamond?: Diamond;
+  product?: Product;
 }
 
 export interface WishlistItem {

@@ -24,7 +24,7 @@ export const useNavLinks = (location?: 'header' | 'footer') => {
       const params = location ? { location } : {};
       const response = await api.get<{ data: NavLink[] }>('/api/public/nav-links', { params });
       // API may return { data: [...] } or just [...] 
-      return Array.isArray(response) ? response : (response as unknown).data || response;
+      return Array.isArray(response) ? response : (response as { data: NavLink[] }).data || response;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes — nav links rarely change
     gcTime: 1000 * 60 * 30,   // Keep in cache for 30 minutes
@@ -41,7 +41,7 @@ export const useSiteSettings = () => {
     queryKey: siteContentKeys.settings(),
     queryFn: async () => {
       const response = await api.get<{ data: SiteSetting[] } | SiteSetting[]>('/api/public/settings');
-      const settings = Array.isArray(response) ? response : (response as unknown).data || [];
+      const settings = Array.isArray(response) ? response : (response as { data: SiteSetting[] }).data || [];
       // Convert array of { key, value } into a flat Record<string, string>
       return (settings as SiteSetting[]).reduce((acc: Record<string, string>, s) => {
         acc[s.key] = s.value;

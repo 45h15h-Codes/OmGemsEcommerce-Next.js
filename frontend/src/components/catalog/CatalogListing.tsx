@@ -1,13 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { catalogApi } from "@/lib/catalogApi";
 import type { CatalogFilter, CatalogProduct, PaginatedResponse } from "@/types";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
+
+interface CatalogListingResponse {
+  products: PaginatedResponse<CatalogProduct>;
+  filters?: CatalogFilter[];
+}
 
 type ListingMode =
   | { kind: "products"; params?: Record<string, string | number | undefined> }
@@ -28,7 +33,7 @@ const DEFAULT_FILTERS: CatalogFilter[] = [
   { key: "price_max", label: "Max Price", type: "number" },
 ];
 
-export function CatalogListing({ mode, eyebrow, title, description, defaultFilters = DEFAULT_FILTERS }: CatalogListingProps) {
+function CatalogListingInner({ mode, eyebrow, title, description, defaultFilters = DEFAULT_FILTERS }: CatalogListingProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -48,12 +53,20 @@ export function CatalogListing({ mode, eyebrow, title, description, defaultFilte
       if (mode.kind === "collection") return catalogApi.collection(mode.slug, queryParams);
       return catalogApi.products(queryParams);
     },
+    retry: (failureCount, error) => {
+      if ((error as any)?.status === 404) return false;
+      return failureCount < 3;
+    },
   });
 
   const filterQuery = useQuery({
     queryKey: ["catalog-filters", mode.kind === "category" ? mode.slug : queryParams.category],
     queryFn: async () => catalogApi.filters(mode.kind === "category" ? mode.slug : String(queryParams.category || "")),
   });
+
+  if (query.isError && (query.error as any)?.status === 404) {
+    notFound();
+  }
 
   const payload = query.data as CatalogListingResponse | PaginatedResponse<CatalogProduct> | undefined;
   const hasProductsEnvelope = (
@@ -178,5 +191,19 @@ export function CatalogListing({ mode, eyebrow, title, description, defaultFilte
         </div>
       </section>
     </main>
+  );
+}
+
+export function CatalogListing(props: CatalogListingProps) {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-background pb-32 pt-36">
+        <div className="mx-auto max-w-[1600px] px-6 md:px-12 lg:px-24">
+          <LoadingSkeleton variant="cards" count={8} />
+        </div>
+      </main>
+    }>
+      <CatalogListingInner {...props} />
+    </Suspense>
   );
 }

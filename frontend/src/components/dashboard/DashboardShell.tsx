@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Role } from "./navigation.config";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardTopbar } from "./DashboardTopbar";
+import { useAuthStore } from "@/lib/auth";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -13,6 +14,10 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, role, userName = "User" }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const authUser = useAuthStore((state) => state.user);
+
+  // Use real name from auth store, fall back to prop while loading
+  const displayName = authUser?.name ?? userName;
 
   return (
     <div className="flex min-h-screen w-full bg-[#f5f4f0] relative text-[#1c1c1c]">
@@ -36,7 +41,7 @@ export function DashboardShell({ children, role, userName = "User" }: DashboardS
       <div className="flex flex-1 flex-col w-full md:w-auto overflow-hidden">
         <DashboardTopbar
           role={role}
-          userName={userName}
+          userName={displayName}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
         <main className="flex-1 overflow-auto p-4 md:p-8">
@@ -48,3 +53,4 @@ export function DashboardShell({ children, role, userName = "User" }: DashboardS
     </div>
   );
 }
+

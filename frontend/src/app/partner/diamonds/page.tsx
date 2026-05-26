@@ -219,7 +219,7 @@ export default function PartnerDiamondsPage() {
                       {diamond.cut || "—"}
                     </td>
                     <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-white">
-                      ${parseFloat(diamond.base_price as unknown).toLocaleString()}
+                      ${Number(diamond.base_price).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
                       <button

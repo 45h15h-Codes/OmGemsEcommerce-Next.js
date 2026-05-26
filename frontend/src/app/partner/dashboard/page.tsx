@@ -9,6 +9,7 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Gem, ShoppingCart, DollarSign, PackageOpen, RotateCcw, Activity } from "lucide-react";
 import { usePartnerStats } from "@/hooks/useDashboard";
+import { PartnerDashboardResponse } from "@/types";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -53,7 +54,8 @@ export default function PartnerDashboardPage() {
     );
   }
 
-  const { stats, recent_activity } = data.data || data;
+  const response = data as PartnerDashboardResponse & { data?: PartnerDashboardResponse };
+  const { stats, recent_activity } = response.data ?? response;
 
   const activities = recent_activity?.map((act: any) => ({
     id: act.id,

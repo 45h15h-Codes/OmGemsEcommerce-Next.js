@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { CreditCard, ShoppingCart, Target, ClipboardList, RotateCcw } from "lucide-react";
 import { useWholesaleStats } from "@/hooks/useDashboard";
 import { useWholesaleOrders } from "@/hooks/useOrders";
+import { WholesaleStats } from "@/types";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -28,7 +29,8 @@ export default function WholesaleDashboardPage() {
     );
   }
 
-  const stats = statsData.data || statsData;
+  const response = statsData as WholesaleStats & { data?: WholesaleStats };
+  const stats = response.data ?? response;
   const recentOrders = ordersData?.data?.slice(0, 5).map(o => ({
     id: o.order_number,
     items: o.items_count || 0,

@@ -62,7 +62,6 @@ export const useAuthStore = create<AuthState>()(
           setCookie('auth_token', token);
         } else {
           removeCookie('auth_token');
-          removeCookie('user_role');
         }
       },
 
@@ -86,7 +85,6 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               isHydrated: true,
             });
-            setCookie('user_role', response.data.role);
           } catch {
             // Token expired or invalid — clear silently
             get().clearAuth();
@@ -102,7 +100,6 @@ export const useAuthStore = create<AuthState>()(
        */
       clearAuth: () => {
         removeCookie('auth_token');
-        removeCookie('user_role');
         set({
           user: null,
           token: null,
@@ -119,7 +116,6 @@ export const useAuthStore = create<AuthState>()(
           const { access_token, user } = response.data;
           
           get().setToken(access_token);
-          setCookie('user_role', user.role); // For proxy (role-based routing)
 
           set({ user, isAuthenticated: true, isLoading: false });
           return user;
@@ -147,7 +143,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await apiClient.get('/api/me');
           set({ user: response.data, isAuthenticated: true, isLoading: false });
-          setCookie('user_role', response.data.role); // Update role cookie
         } catch {
           get().clearAuth();
         }

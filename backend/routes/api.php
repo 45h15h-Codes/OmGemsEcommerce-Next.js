@@ -105,7 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('stats', [PartnerDashboardController::class, 'stats']);
             Route::get('orders', [PartnerOrderController::class, 'index']);
             Route::get('orders/{id}', [PartnerOrderController::class, 'show']);
-            Route::apiResource('diamonds', PartnerDiamondController::class);
+            Route::apiResource('diamonds', PartnerDiamondController::class)->names('partner.diamonds');
             Route::patch('diamonds/{id}/toggle', [PartnerDiamondController::class, 'toggleAvailability']);
             Route::patch('diamonds/{id}/toggle-availability', [PartnerDiamondController::class, 'toggleAvailability']);
         });

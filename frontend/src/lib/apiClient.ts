@@ -52,7 +52,7 @@ apiClient.interceptors.request.use((config) => {
 // Response interceptor to handle 401 Unauthorized globally and unwrap errors into ApiError
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<unknown>) => {
+  (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {
     if (error.response?.status === 401) {
       console.warn('Unauthenticated. Redirecting to login...');
       if (typeof document !== 'undefined') {
