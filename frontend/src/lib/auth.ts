@@ -119,7 +119,7 @@ export const useAuthStore = create<AuthState>()(
           const { access_token, user } = response.data;
           
           get().setToken(access_token);
-          setCookie('user_role', user.role); // For middleware
+          setCookie('user_role', user.role); // For proxy (role-based routing)
 
           set({ user, isAuthenticated: true, isLoading: false });
           return user;

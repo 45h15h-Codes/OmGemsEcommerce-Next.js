@@ -136,7 +136,7 @@ php artisan db:seed --class=MockDataSeeder
 ```
 
 ### Authentication Flow
-The system uses **Zustand** state management and **Axios interceptors** to handle bearer tokens. On login, the backend returns the user's role and allowed permissions, which is then used by the Next.js **edge middleware** to dynamically restrict navigation.
+The system uses **Zustand** state management and **Axios interceptors** to handle bearer tokens. On login, the backend returns the user's role and allowed permissions, which is then used by the Next.js **proxy** (`proxy.ts`) to dynamically restrict navigation.
 
 <br/>
 
